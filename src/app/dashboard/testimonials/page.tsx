@@ -3,48 +3,63 @@
 import { ModulePage, ModuleField } from '@/components/admin/ModulePage';
 import { Column } from '@/components/ui/DataTable';
 import { StatusBadge, StatusCategory } from '@/components/ui/StatusBadge';
-import { Star, CheckCircle2, EyeOff } from 'lucide-react';
+import { Star, CheckCircle2, Clock } from 'lucide-react';
 
 interface Testimonial {
   id: string;
-  name: string;
-  company: string;
   quote: string;
+  authorName: string;
+  authorRole: string;
+  companyName: string;
+  clientImage: string;
+  projectTitle: string;
   rating: string;
-  status: 'HIDDEN' | 'PUBLISHED';
+  approvalStatus: 'approved' | 'pending';
 }
 
-const STATUS_META: Record<Testimonial['status'], { label: string; category: StatusCategory }> = {
-  HIDDEN: { label: 'Hidden', category: 'default' },
-  PUBLISHED: { label: 'Published', category: 'success' },
+const STATUS_META: Record<Testimonial['approvalStatus'], { label: string; category: StatusCategory }> = {
+  approved: { label: 'Approved', category: 'success' },
+  pending: { label: 'Pending', category: 'warning' },
 };
 
 const DATA: Testimonial[] = [
-  { id: '1', name: 'Anjali Mehta', company: 'HealthTrack', quote: 'TheWebHero delivered ahead of schedule with great quality.', rating: '5', status: 'PUBLISHED' },
-  { id: '2', name: 'Vikram Desai', company: 'UrbanNest', quote: 'Our conversion rate doubled after the redesign.', rating: '5', status: 'PUBLISHED' },
-  { id: '3', name: 'Ritu Bansal', company: 'ShopEase', quote: 'Responsive team, solid communication throughout.', rating: '4', status: 'HIDDEN' },
+  {
+    id: '1', quote: 'TheWebHero delivered ahead of schedule with great quality.', authorName: 'Anjali Mehta', authorRole: 'CTO',
+    companyName: 'HealthTrack', clientImage: '', projectTitle: 'HealthTrack Patient Portal', rating: '5', approvalStatus: 'approved',
+  },
+  {
+    id: '2', quote: 'Our conversion rate doubled after the redesign.', authorName: 'Vikram Desai', authorRole: 'Founder',
+    companyName: 'UrbanNest', clientImage: '', projectTitle: 'UrbanNest Property Platform', rating: '5', approvalStatus: 'approved',
+  },
+  {
+    id: '3', quote: 'Responsive team, solid communication throughout.', authorName: 'Ritu Bansal', authorRole: 'Marketing Lead',
+    companyName: 'ShopEase', clientImage: '', projectTitle: 'ShopEase Storefront', rating: '4', approvalStatus: 'pending',
+  },
 ];
 
 const FIELDS: ModuleField[] = [
-  { key: 'name', label: 'Client Name', required: true },
-  { key: 'company', label: 'Company' },
-  { key: 'quote', label: 'Testimonial', type: 'textarea', required: true },
-  { key: 'rating', label: 'Rating (1-5)' },
-  { key: 'status', label: 'Status', type: 'select', options: Object.entries(STATUS_META).map(([value, m]) => ({ value, label: m.label })) },
+  { key: 'authorName', label: 'Client Name', required: true },
+  { key: 'authorRole', label: 'Client Role' },
+  { key: 'companyName', label: 'Company' },
+  { key: 'clientImage', label: 'Client Photo URL' },
+  { key: 'projectTitle', label: 'Related Project' },
+  { key: 'quote', label: 'Testimonial Quote', type: 'richtext', required: true },
+  { key: 'rating', label: 'Rating (1-5)', type: 'number' },
+  { key: 'approvalStatus', label: 'Approval Status', type: 'select', options: Object.entries(STATUS_META).map(([value, m]) => ({ value, label: m.label })) },
 ];
 
 export default function TestimonialsPage() {
   const columns: Column<Testimonial>[] = [
-    { key: 'name', header: 'Client' },
-    { key: 'company', header: 'Company' },
+    { key: 'authorName', header: 'Client' },
+    { key: 'companyName', header: 'Company' },
     { key: 'rating', header: 'Rating' },
-    { key: 'status', header: 'Status', render: (r) => <StatusBadge label={STATUS_META[r.status].label} category={STATUS_META[r.status].category} /> },
+    { key: 'approvalStatus', header: 'Status', render: (r) => <StatusBadge label={STATUS_META[r.approvalStatus].label} category={STATUS_META[r.approvalStatus].category} /> },
   ];
 
   const stats = [
     { title: 'Total', value: DATA.length, icon: Star, color: '#7c3aed' },
-    { title: 'Published', value: DATA.filter((d) => d.status === 'PUBLISHED').length, icon: CheckCircle2, color: '#16a34a' },
-    { title: 'Hidden', value: DATA.filter((d) => d.status === 'HIDDEN').length, icon: EyeOff, color: '#64748b' },
+    { title: 'Approved', value: DATA.filter((d) => d.approvalStatus === 'approved').length, icon: CheckCircle2, color: '#16a34a' },
+    { title: 'Pending', value: DATA.filter((d) => d.approvalStatus === 'pending').length, icon: Clock, color: '#d97706' },
   ];
 
   return (
@@ -56,7 +71,7 @@ export default function TestimonialsPage() {
       fields={FIELDS}
       initialData={DATA}
       stats={stats}
-      searchKey="name"
+      searchKey="authorName"
       emptyMessage="No testimonials yet."
     />
   );

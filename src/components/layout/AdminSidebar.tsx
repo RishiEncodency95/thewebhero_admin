@@ -43,6 +43,9 @@ import {
   Briefcase,
   Users,
   MapPin,
+  Handshake,
+  Trophy,
+  ShieldCheck,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
@@ -89,6 +92,8 @@ const navItems: { group: string; items: NavItem[] }[] = [
     items: [
       { title: 'Careers', url: '/dashboard/careers', icon: Briefcase },
       { title: 'Team', url: '/dashboard/team', icon: Users },
+      { title: 'Partners', url: '/dashboard/partners', icon: Handshake },
+      { title: 'Awards', url: '/dashboard/awards', icon: Trophy },
     ],
   },
   {
@@ -112,6 +117,7 @@ const navItems: { group: string; items: NavItem[] }[] = [
     group: 'System',
     items: [
       { title: 'Users & Roles', url: '/dashboard/users', icon: UserCog },
+      { title: 'Permissions', url: '/dashboard/permissions', icon: ShieldCheck },
       { title: 'Notifications', url: '/dashboard/notifications', icon: Bell },
       { title: 'Audit Logs', url: '/dashboard/audit-logs', icon: FileKey },
       { title: 'Settings', url: '/dashboard/settings', icon: Settings },

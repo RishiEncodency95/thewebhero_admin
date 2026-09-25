@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { FormDialog } from '@/components/ui/FormDialog';
 import { AppFormField, AppFormTextarea, AppFormSelect, AppFormRichText } from '@/components/ui/AppFormField';
+import { RepeaterField, RepeaterSubField } from '@/components/ui/RepeaterField';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Pencil, Trash2, Search } from 'lucide-react';
@@ -31,11 +32,14 @@ export interface ModuleStat {
 export interface ModuleField {
   key: string;
   label: string;
-  type?: 'text' | 'email' | 'textarea' | 'richtext' | 'select' | 'date' | 'number' | 'url';
+  type?: 'text' | 'email' | 'textarea' | 'richtext' | 'select' | 'date' | 'number' | 'url' | 'stringlist' | 'repeater';
   options?: { label: string; value: string }[];
   required?: boolean;
   placeholder?: string;
   defaultValue?: string;
+  // 'repeater' only: shape of each row (e.g. [{key:'title',label:'Title'},{key:'description',label:'Description',type:'textarea'}]).
+  repeaterFields?: RepeaterSubField[];
+  repeaterAddLabel?: string;
 }
 
 interface ModulePageProps<T extends { id: string }> {
@@ -93,7 +97,18 @@ export function ModulePage<T extends { id: string }>({
     const data = new FormData(form);
     const base: Record<string, unknown> = existing ? { ...existing } : { id: `new-${nextId.current++}` };
     for (const f of fields) {
-      base[f.key] = data.get(f.key) ?? '';
+      const raw = String(data.get(f.key) ?? '');
+      if (f.type === 'repeater') {
+        try {
+          base[f.key] = JSON.parse(raw || '[]');
+        } catch {
+          base[f.key] = [];
+        }
+      } else if (f.type === 'stringlist') {
+        base[f.key] = raw.split('\n').map((line) => line.trim()).filter(Boolean);
+      } else {
+        base[f.key] = raw;
+      }
     }
     return base as T;
   }
@@ -118,13 +133,25 @@ export function ModulePage<T extends { id: string }>({
 
   function renderFields(existing?: T) {
     return fields.map((f) => {
-      const defaultValue = existing ? String((existing as Record<string, unknown>)[f.key] ?? '') : f.defaultValue;
+      const rawExisting = existing ? (existing as Record<string, unknown>)[f.key] : undefined;
+
+      if (f.type === 'repeater') {
+        const rows = Array.isArray(rawExisting) ? (rawExisting as Record<string, string>[]) : [];
+        return (
+          <RepeaterField key={f.key} name={f.key} label={f.label} subFields={f.repeaterFields ?? []} defaultValue={rows} addLabel={f.repeaterAddLabel} />
+        );
+      }
+
+      const defaultValue = f.type === 'stringlist'
+        ? (Array.isArray(rawExisting) ? (rawExisting as string[]).join('\n') : (f.defaultValue ?? ''))
+        : (existing ? String(rawExisting ?? '') : f.defaultValue);
+
       if (f.type === 'richtext') {
         return (
           <AppFormRichText key={f.key} name={f.key} label={f.label} required={f.required} placeholder={f.placeholder} defaultValue={defaultValue} />
         );
       }
-      if (f.type === 'textarea') {
+      if (f.type === 'stringlist' || f.type === 'textarea') {
         return (
           <AppFormTextarea key={f.key} name={f.key} label={f.label} required={f.required} placeholder={f.placeholder} defaultValue={defaultValue} rows={4} />
         );
