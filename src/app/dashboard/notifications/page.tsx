@@ -1,61 +1,148 @@
 'use client';
 
-import { ModulePage, ModuleField } from '@/components/admin/ModulePage';
-import { Column } from '@/components/ui/DataTable';
-import { StatusBadge, StatusCategory } from '@/components/ui/StatusBadge';
-import { Bell, MailWarning, CheckCheck } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { Bell, CheckCheck, ChevronRight, Inbox } from 'lucide-react';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { Button } from '@/components/ui/button';
+import { api, ApiRequestError, Paginated } from '@/lib/api';
+import { formatDate } from '@/components/leads/LeadsPage';
 
-interface Notification {
-  id: string;
+interface AppNotification {
+  _id: string;
   title: string;
-  type: 'LEAD' | 'SYSTEM' | 'CONTENT';
-  date: string;
-  status: 'UNREAD' | 'READ';
+  message: string;
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
-const STATUS_META: Record<Notification['status'], { label: string; category: StatusCategory }> = {
-  UNREAD: { label: 'Unread', category: 'warning' },
-  READ: { label: 'Read', category: 'default' },
-};
-
-const DATA: Notification[] = [
-  { id: '1', title: 'New lead: Ananya Verma submitted a quote request', type: 'LEAD', date: '24 Sep, 10:12 AM', status: 'UNREAD' },
-  { id: '2', title: 'Blog post "10 Ways to Speed Up Your Next.js Site" published', type: 'CONTENT', date: '18 Sep, 4:30 PM', status: 'READ' },
-  { id: '3', title: 'Weekly backup completed successfully', type: 'SYSTEM', date: '17 Sep, 2:00 AM', status: 'READ' },
-];
-
-const FIELDS: ModuleField[] = [
-  { key: 'title', label: 'Title', required: true },
-  { key: 'type', label: 'Type', type: 'select', options: [{ value: 'LEAD', label: 'Lead' }, { value: 'CONTENT', label: 'Content' }, { value: 'SYSTEM', label: 'System' }] },
-  { key: 'date', label: 'Date' },
-  { key: 'status', label: 'Status', type: 'select', options: Object.entries(STATUS_META).map(([value, m]) => ({ value, label: m.label })) },
-];
+type NotificationsResponse = Paginated<AppNotification> & { unreadCount: number };
 
 export default function NotificationsPage() {
-  const columns: Column<Notification>[] = [
-    { key: 'title', header: 'Notification' },
-    { key: 'type', header: 'Type' },
-    { key: 'date', header: 'Date' },
-    { key: 'status', header: 'Status', render: (r) => <StatusBadge label={STATUS_META[r.status].label} category={STATUS_META[r.status].category} /> },
-  ];
+  const router = useRouter();
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const [page, setPage] = useState(1);
+  const [tick, setTick] = useState(0);
+  const [data, setData] = useState<NotificationsResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const stats = [
-    { title: 'Total', value: DATA.length, icon: Bell, color: '#7c3aed' },
-    { title: 'Unread', value: DATA.filter((d) => d.status === 'UNREAD').length, icon: MailWarning, color: '#d97706' },
-    { title: 'Read', value: DATA.filter((d) => d.status === 'READ').length, icon: CheckCheck, color: '#16a34a' },
-  ];
+  useEffect(() => {
+    let alive = true;
+    api<NotificationsResponse>('/notifications', { query: { page, limit: 20, unreadOnly: unreadOnly || undefined } })
+      .then((d) => {
+        if (!alive) return;
+        setData(d);
+        setError(null);
+      })
+      .catch((err) => alive && setError(err instanceof ApiRequestError ? err.message : 'Failed to load'));
+    return () => {
+      alive = false;
+    };
+  }, [page, unreadOnly, tick]);
+
+  const open = async (n: AppNotification) => {
+    if (!n.isRead) await api(`/notifications/${n._id}/read`, { method: 'PUT' }).catch(() => {});
+    if (n.link) router.push(n.link);
+    else setTick((t) => t + 1);
+  };
+
+  const markAll = async () => {
+    try {
+      await api('/notifications/read-all', { method: 'PUT' });
+      toast.success('All notifications marked as read');
+      setTick((t) => t + 1);
+    } catch (err) {
+      toast.error(err instanceof ApiRequestError ? err.message : 'Failed');
+    }
+  };
 
   return (
-    <ModulePage<Notification>
-      title="Notifications"
-      description="System and activity notifications for the admin team."
-      addLabel="Add Notification"
-      columns={columns}
-      fields={FIELDS}
-      initialData={DATA}
-      stats={stats}
-      searchKey="title"
-      emptyMessage="No notifications yet."
-    />
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHeader
+        title="Notifications"
+        description="New leads and enquiries from the website appear here."
+        actions={
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-xl border border-slate-200 bg-white p-1">
+              {[
+                { label: 'All', value: false },
+                { label: `Unread${data ? ` (${data.unreadCount})` : ''}`, value: true },
+              ].map((t) => (
+                <button
+                  key={t.label}
+                  onClick={() => {
+                    setUnreadOnly(t.value);
+                    setPage(1);
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-[13px] font-medium ${unreadOnly === t.value ? 'bg-violet-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <Button variant="outline" className="rounded-xl" onClick={markAll} disabled={!data?.unreadCount}>
+              <CheckCheck className="mr-1.5 h-4 w-4" />
+              Mark all read
+            </Button>
+          </div>
+        }
+      />
+
+      {error ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+          {!data ? (
+            <p className="p-10 text-center text-sm text-slate-400">Loading…</p>
+          ) : data.items.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 p-12 text-slate-400">
+              <Inbox className="h-6 w-6" />
+              <span className="text-sm">{unreadOnly ? 'You are all caught up.' : 'No notifications yet.'}</span>
+            </div>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {data.items.map((n) => (
+                <li key={n._id}>
+                  <button onClick={() => open(n)} className="flex w-full items-start gap-3 px-5 py-4 text-left hover:bg-slate-50">
+                    <span
+                      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${n.isRead ? 'bg-slate-100 text-slate-400' : 'bg-violet-100 text-violet-600'}`}
+                    >
+                      <Bell className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <span className={`text-sm ${n.isRead ? 'text-slate-600' : 'font-semibold text-slate-900'}`}>{n.title}</span>
+                        {!n.isRead && <span className="h-2 w-2 rounded-full bg-fuchsia-500" />}
+                      </span>
+                      <span className="mt-0.5 block truncate text-[13px] text-slate-500">{n.message}</span>
+                      <span className="mt-1 block text-[12px] text-slate-400">{formatDate(n.createdAt)}</span>
+                    </span>
+                    {n.link && <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-slate-300" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {data && data.meta.totalPages > 1 && (
+        <div className="flex items-center justify-between text-[13px] text-slate-500">
+          <span>
+            Page {data.meta.page} of {data.meta.totalPages}
+          </span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="rounded-lg" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              Previous
+            </Button>
+            <Button size="sm" variant="outline" className="rounded-lg" disabled={page >= data.meta.totalPages} onClick={() => setPage(page + 1)}>
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

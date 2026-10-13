@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { loginSchema, LoginFormValues } from '@/lib/validation/auth';
@@ -11,11 +11,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck, Loader2, ArrowRight, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { ApiRequestError } from '@/lib/api';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const {
@@ -24,15 +27,16 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
 
-  // Wire this up to your own auth API — this is just the UI/validation flow.
   const onSubmit = async (values: LoginFormValues) => {
     setErrorMessage(null);
     setIsSubmitting(true);
     try {
-      console.log('login submit', { ...values, rememberMe });
-      router.push('/dashboard');
-    } catch {
-      setErrorMessage('Login failed. Please try again.');
+      await login(values.email, values.password);
+      // Only follow same-site paths from ?next= to avoid open redirects.
+      const next = searchParams.get('next');
+      router.replace(next && next.startsWith('/dashboard') ? next : '/dashboard');
+    } catch (err) {
+      setErrorMessage(err instanceof ApiRequestError ? err.message : 'Login failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -57,20 +61,22 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-1.5">
-            <Label htmlFor="identifier" className={errors.identifier ? 'text-destructive' : 'text-slate-700'}>
-              Email or Mobile
+            <Label htmlFor="email" className={errors.email ? 'text-destructive' : 'text-slate-700'}>
+              Email
             </Label>
             <div className="relative">
               <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
-                id="identifier"
+                id="email"
+                type="email"
+                autoComplete="username"
                 autoFocus
-                placeholder="e.g. admin@example.com"
-                className={`h-11 border-slate-200 bg-slate-50 pl-10 text-slate-900 placeholder:text-slate-400 focus-visible:border-violet-400 focus-visible:ring-violet-400/20 ${errors.identifier ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                {...register('identifier')}
+                placeholder="e.g. admin@thewebhero.com"
+                className={`h-11 border-slate-200 bg-slate-50 pl-10 text-slate-900 placeholder:text-slate-400 focus-visible:border-violet-400 focus-visible:ring-violet-400/20 ${errors.email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                {...register('email')}
               />
             </div>
-            {errors.identifier && <p className="text-[0.8rem] font-medium text-red-500">{errors.identifier.message}</p>}
+            {errors.email && <p className="text-[0.8rem] font-medium text-red-500">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -87,6 +93,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 placeholder="••••••••"
                 className={`h-11 border-slate-200 bg-slate-50 pl-10 pr-10 text-slate-900 placeholder:text-slate-400 focus-visible:border-violet-400 focus-visible:ring-violet-400/20 ${errors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                 {...register('password')}
@@ -102,16 +109,6 @@ export default function LoginPage() {
             </div>
             {errors.password && <p className="text-[0.8rem] font-medium text-red-500">{errors.password.message}</p>}
           </div>
-
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded accent-violet-600"
-            />
-            Remember me
-          </label>
 
           {errorMessage && (
             <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-600">
@@ -140,10 +137,18 @@ export default function LoginPage() {
         <div className="mt-6 flex items-start gap-2.5 border-t border-slate-200 pt-6 text-slate-500">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
           <p className="text-xs leading-relaxed">
-            Secure, role-based access to your dashboard. Wire this form up to your own auth API.
+            Secure, role-based access to the TheWebHero admin console.
           </p>
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

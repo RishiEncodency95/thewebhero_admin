@@ -172,7 +172,7 @@ export function ModulePage<T extends { id: string }>({
         ...columns,
         {
           key: '__actions',
-          header: '',
+          header: <span className="block text-right">Actions</span>,
           render: (item) => (
             <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
               {allowEdit && (

@@ -1,12 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { LogOut, Search, Bell } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
 
-// Swap this for your real logged-in user (from your auth/session of choice).
-const CURRENT_USER = { name: 'Admin User', email: 'admin@example.com', role: 'Super Admin' };
+/** "super-admin" -> "Super Admin" */
+function roleLabel(role: string) {
+  return role.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 function initials(name: string) {
   return name
@@ -19,11 +24,30 @@ function initials(name: string) {
 
 export function AdminNavbar() {
   const router = useRouter();
+  const { user, logout } = useAuth();
+  const [unread, setUnread] = useState(0);
 
-  const handleLogout = () => {
-    // Wire this up to your own auth logic (clear token/session, call API, etc.)
-    router.push('/login');
+  // Poll unread notifications (new leads etc.) once a minute.
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      api<{ unreadCount: number }>('/notifications', { query: { unreadOnly: true, limit: 1 } })
+        .then((d) => alive && setUnread(d.unreadCount ?? 0))
+        .catch(() => {});
+    load();
+    const t = setInterval(load, 60_000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
   };
+
+  const CURRENT_USER = { name: user?.name ?? '', email: user?.email ?? '', role: roleLabel(user?.role ?? '') };
 
   return (
     <header className="h-16 flex items-center gap-4 px-6 border-b border-slate-200 sticky top-0 z-10 bg-white/90 backdrop-blur-sm">
@@ -42,17 +66,23 @@ export function AdminNavbar() {
       </div>
 
       <div className="ml-auto flex items-center gap-3">
-        <button className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+        <Link
+          href="/dashboard/notifications"
+          aria-label={`Notifications${unread ? ` (${unread} unread)` : ''}`}
+          className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+        >
           <Bell className="w-[18px] h-[18px]" />
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-fuchsia-500 text-white text-[10px] font-semibold flex items-center justify-center">
-            3
-          </span>
-        </button>
+          {unread > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-fuchsia-500 text-white text-[10px] font-semibold flex items-center justify-center">
+              {unread > 99 ? '99+' : unread}
+            </span>
+          )}
+        </Link>
 
         <div className="relative group ml-1">
           <button className="flex items-center gap-2.5 p-1 pr-2 rounded-full transition-colors hover:bg-slate-100">
             <span className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 via-fuchsia-500 to-orange-400 flex items-center justify-center text-white text-xs font-semibold shrink-0 ring-2 ring-white">
-              {initials(CURRENT_USER.name)}
+              {initials(CURRENT_USER.name || CURRENT_USER.email || '?')}
             </span>
             <span className="hidden lg:flex flex-col items-start leading-tight">
               <span className="text-sm font-semibold text-slate-800">{CURRENT_USER.name}</span>

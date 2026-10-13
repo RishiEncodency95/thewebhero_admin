@@ -1,54 +1,98 @@
 'use client';
 
-import { DataTable, Column } from '@/components/ui/DataTable';
-import { StatusBadge, StatusCategory } from '@/components/ui/StatusBadge';
-import { StatCard } from '@/components/admin/ModulePage';
-import { FileKey, PlusCircle, Pencil, Trash } from 'lucide-react';
+import React, { useState } from 'react';
+import { History } from 'lucide-react';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { cardClass, EmptyState, ErrorBlock, formatDateTime, LoadingBlock, Pagination, rowClass, Segmented, tdClass, thClass, usePaginated } from '@/components/admin/kit';
 
 interface AuditLog {
-  id: string;
-  user: string;
-  action: 'CREATE' | 'UPDATE' | 'DELETE';
-  entity: string;
-  timestamp: string;
+  _id: string;
+  action: 'create' | 'update' | 'delete' | 'login' | 'logout';
+  resource: string;
+  resourceId?: string;
+  userEmail?: string;
+  user?: { name: string; email: string } | null;
+  ip?: string;
+  createdAt: string;
 }
 
-const ACTION_META: Record<AuditLog['action'], { label: string; category: StatusCategory }> = {
-  CREATE: { label: 'Create', category: 'success' },
-  UPDATE: { label: 'Update', category: 'info' },
-  DELETE: { label: 'Delete', category: 'error' },
+type ActionFilter = 'all' | AuditLog['action'];
+
+const ACTION_STYLE: Record<AuditLog['action'], string> = {
+  create: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  update: 'bg-blue-50 text-blue-700 ring-blue-200',
+  delete: 'bg-red-50 text-red-700 ring-red-200',
+  login: 'bg-violet-50 text-violet-700 ring-violet-200',
+  logout: 'bg-slate-100 text-slate-600 ring-slate-200',
 };
 
-const DATA: AuditLog[] = [
-  { id: '1', user: 'Rohit Kumar', action: 'UPDATE', entity: 'Page — About Us', timestamp: '24 Sep, 09:41 AM' },
-  { id: '2', user: 'Sara Fernandes', action: 'CREATE', entity: 'Blog Post — Core Web Vitals in 2026', timestamp: '18 Sep, 04:30 PM' },
-  { id: '3', user: 'Rohit Kumar', action: 'DELETE', entity: 'Testimonial — Ritu Bansal', timestamp: '15 Sep, 11:02 AM' },
-  { id: '4', user: 'Dev Patel', action: 'UPDATE', entity: 'Service — SEO', timestamp: '12 Sep, 03:15 PM' },
-];
+const label = (s: string) => s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 export default function AuditLogsPage() {
-  const columns: Column<AuditLog>[] = [
-    { key: 'timestamp', header: 'Time' },
-    { key: 'user', header: 'User' },
-    { key: 'action', header: 'Action', render: (r) => <StatusBadge label={ACTION_META[r.action].label} category={ACTION_META[r.action].category} /> },
-    { key: 'entity', header: 'Entity' },
-  ];
+  const [action, setAction] = useState<ActionFilter>('all');
+  const [page, setPage] = useState(1);
+  const { data, error } = usePaginated<AuditLog>('/audit-logs', { page, limit: 30, action: action === 'all' ? undefined : action });
 
   return (
-    <div className="animate-in fade-in max-w-[1600px] mx-auto space-y-5 pb-8 duration-500">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Audit Logs</h1>
-        <p className="mt-1 text-sm text-slate-500">Read-only history of who changed what and when.</p>
+    <div>
+      <PageHeader title="Audit log" description="Every change made in the admin — who did it, what, and when." />
+
+      <div className="mb-4">
+        <Segmented<ActionFilter>
+          value={action}
+          onChange={(v) => { setAction(v); setPage(1); }}
+          options={[
+            { value: 'all', label: 'All' },
+            { value: 'create', label: 'Created' },
+            { value: 'update', label: 'Updated' },
+            { value: 'delete', label: 'Deleted' },
+            { value: 'login', label: 'Sign-ins' },
+          ]}
+        />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard title="Total Events" value={DATA.length} icon={FileKey} color="#7c3aed" />
-        <StatCard title="Creates" value={DATA.filter((d) => d.action === 'CREATE').length} icon={PlusCircle} color="#16a34a" />
-        <StatCard title="Updates" value={DATA.filter((d) => d.action === 'UPDATE').length} icon={Pencil} color="#3b82f6" />
-        <StatCard title="Deletes" value={DATA.filter((d) => d.action === 'DELETE').length} icon={Trash} color="#dc2626" />
-      </div>
-
-      <DataTable data={DATA} columns={columns} emptyMessage="No activity recorded yet." pageSize={15} />
+      {error ? (
+        <ErrorBlock message={error} />
+      ) : !data ? (
+        <LoadingBlock />
+      ) : data.items.length === 0 ? (
+        <EmptyState icon={History} message="Nothing logged yet." />
+      ) : (
+        <div className={`overflow-hidden ${cardClass}`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-[13.5px]">
+              <thead className="bg-slate-50/80">
+                <tr>
+                  <th className={thClass}>When</th>
+                  <th className={thClass}>User</th>
+                  <th className={thClass}>Action</th>
+                  <th className={thClass}>Section</th>
+                  <th className={thClass}>Record</th>
+                  <th className={thClass}>IP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.items.map((l) => (
+                  <tr key={l._id} className={rowClass}>
+                    <td className={`${tdClass} whitespace-nowrap text-slate-500`}>{formatDateTime(l.createdAt)}</td>
+                    <td className={tdClass}>
+                      <span className="block font-semibold text-slate-900">{l.user?.name ?? '—'}</span>
+                      <span className="block text-[12px] text-slate-500">{l.user?.email ?? l.userEmail ?? ''}</span>
+                    </td>
+                    <td className={tdClass}>
+                      <span className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold capitalize ring-1 ${ACTION_STYLE[l.action]}`}>{l.action}</span>
+                    </td>
+                    <td className={`${tdClass} text-slate-700`}>{label(l.resource)}</td>
+                    <td className={`${tdClass} font-mono text-[12px] text-slate-400`}>{l.resourceId ?? '—'}</td>
+                    <td className={`${tdClass} font-mono text-[12px] text-slate-400`}>{l.ip ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {data && <Pagination meta={data.meta} onPage={setPage} />}
     </div>
   );
 }
