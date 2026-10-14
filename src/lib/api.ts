@@ -98,10 +98,10 @@ export async function api<T = unknown>(path: string, options: RequestOptions = {
 }
 
 /** Multipart upload (e.g. media library). Same auth + refresh handling as api(). */
-export async function apiUpload<T = unknown>(path: string, form: FormData): Promise<T> {
+export async function apiUpload<T = unknown>(path: string, form: FormData, method: 'POST' | 'PUT' = 'POST'): Promise<T> {
   const send = () =>
     fetch(`${API_URL}${path}`, {
-      method: 'POST',
+      method,
       credentials: 'include',
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
       body: form,

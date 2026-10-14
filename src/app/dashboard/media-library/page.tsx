@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Copy, ExternalLink, FileText, ImageIcon, Loader2, Trash2, Upload } from 'lucide-react';
+import { Copy, ExternalLink, FileText, ImageIcon, Loader2, RefreshCw, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -38,6 +38,31 @@ export default function MediaLibraryPage() {
   const [toDelete, setToDelete] = useState<MediaItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const replaceRef = useRef<HTMLInputElement>(null);
+  const [replacing, setReplacing] = useState<MediaItem | null>(null);
+  const [replaceBusy, setReplaceBusy] = useState<string | null>(null);
+
+  // Swaps the file behind a media item; the backend deletes the old file and
+  // updates every page that used its URL.
+  const replaceFile = async (files: FileList | null) => {
+    const target = replacing;
+    const file = files?.[0];
+    if (replaceRef.current) replaceRef.current.value = '';
+    if (!target || !file) return setReplacing(null);
+    setReplaceBusy(target._id);
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      await apiUpload(`/media/${target._id}`, form, 'PUT');
+      toast.success('File replaced', { description: 'The old file was deleted and pages using it now show the new one.' });
+      reload();
+    } catch (err) {
+      toast.error(errorMessage(err, 'Replace failed'));
+    } finally {
+      setReplacing(null);
+      setReplaceBusy(null);
+    }
+  };
 
   const uploadFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -148,6 +173,11 @@ export default function MediaLibraryPage() {
                     <a href={m.url} target="_blank" rel="noopener noreferrer" title="Open" className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-slate-700 hover:text-violet-700">
                       <ExternalLink className="h-4 w-4" />
                     </a>
+                    {can('media', 'update') && (
+                      <button type="button" title="Replace file" disabled={!!replaceBusy} onClick={() => { setReplacing(m); replaceRef.current?.click(); }} className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-slate-700 hover:text-violet-700">
+                        {replaceBusy === m._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                      </button>
+                    )}
                     {can('media', 'delete') && (
                       <button type="button" title="Delete" onClick={() => setToDelete(m)} className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-slate-700 hover:text-red-600">
                         <Trash2 className="h-4 w-4" />
@@ -166,6 +196,7 @@ export default function MediaLibraryPage() {
       )}
       {data && <Pagination meta={data.meta} onPage={setPage} />}
 
+      <input ref={replaceRef} type="file" accept={ACCEPT} hidden onChange={(e) => replaceFile(e.target.files)} />
       <ConfirmDialog
         open={!!toDelete}
         title="Delete this file?"
