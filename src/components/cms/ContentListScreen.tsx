@@ -13,8 +13,8 @@ import { api, ApiRequestError, Paginated } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { analyseSeo, ContentTypeDef, Doc, FieldDef, publicPath, scoreTone, SeoValue, SITE_URL, lowerLabel } from '@/lib/cms';
 import { useContentType } from './useContentType';
+import { PAGE_SIZE, Pagination } from '@/components/admin/kit';
 
-const PAGE_SIZE = 25;
 
 const SCORE_STYLE = { good: 'bg-emerald-50 text-emerald-700 ring-emerald-200', warn: 'bg-amber-50 text-amber-700 ring-amber-200', bad: 'bg-red-50 text-red-700 ring-red-200' };
 
@@ -231,17 +231,7 @@ export function ContentListScreen({ resource }: { resource: string }) {
         <ListTable def={def} items={data.items} onDelete={setToDelete} canDelete={can(resource, 'delete')} canEdit={can(resource, 'update')} />
       )}
 
-      {data && data.meta.totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-[13px] text-slate-500">
-          <span>
-            {(data.meta.page - 1) * data.meta.limit + 1}–{Math.min(data.meta.page * data.meta.limit, data.meta.total)} of {data.meta.total}
-          </span>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="rounded-lg" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
-            <Button size="sm" variant="outline" className="rounded-lg" disabled={page >= data.meta.totalPages} onClick={() => setPage(page + 1)}>Next</Button>
-          </div>
-        </div>
-      )}
+      {data && <Pagination meta={data.meta} onPage={setPage} noun={lowerLabel(def.labelPlural)} />}
 
       <ConfirmDialog
         open={!!toDelete}

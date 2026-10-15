@@ -22,6 +22,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/admin/StatCard';
 import { PageHeader } from '@/components/admin/PageHeader';
+import { PAGE_SIZE, Pagination } from '@/components/admin/kit';
 import { PRIMARY_BUTTON_CLASS } from '@/components/admin/buttons';
 import { api, ApiRequestError, Paginated } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -66,7 +67,6 @@ export interface LeadsPageProps {
   sections: { title: string; fields: LeadField[] }[];
 }
 
-const PAGE_SIZE = 20;
 
 export const formatDate = (iso?: string) =>
   iso ? new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
@@ -299,21 +299,7 @@ function LeadsPageInner({ resource, title, description, nameKey, headlineKey, co
             onRowClick={openLead}
             emptyMessage={loading ? 'Loading…' : search || status !== 'all' ? 'No leads match these filters.' : 'No leads yet.'}
           />
-          {data && data.meta.totalPages > 1 && (
-            <div className="flex items-center justify-between text-[13px] text-slate-500">
-              <span>
-                Page {data.meta.page} of {data.meta.totalPages} · {data.meta.total} leads
-              </span>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="rounded-lg" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                  Previous
-                </Button>
-                <Button size="sm" variant="outline" className="rounded-lg" disabled={page >= data.meta.totalPages} onClick={() => setPage(page + 1)}>
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          {data && <Pagination meta={data.meta} onPage={setPage} noun="leads" />}
         </>
       )}
 

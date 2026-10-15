@@ -33,7 +33,7 @@ export default function MediaLibraryPage() {
   const [searchInput, setSearchInput] = useState('');
   const search = useDebounced(searchInput.trim());
   const [page, setPage] = useState(1);
-  const { data, error, reload } = usePaginated<MediaItem>('/media', { page, limit: 24, search, mimeType: kind === 'all' ? undefined : kind });
+  const { data, error, reload } = usePaginated<MediaItem>('/media', { page, limit: 12, search, mimeType: kind === 'all' ? undefined : kind });
   const [uploading, setUploading] = useState(0);
   const [toDelete, setToDelete] = useState<MediaItem | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -194,7 +194,7 @@ export default function MediaLibraryPage() {
           })}
         </div>
       )}
-      {data && <Pagination meta={data.meta} onPage={setPage} />}
+      {data && <Pagination meta={data.meta} onPage={setPage} noun="files" />}
 
       <input ref={replaceRef} type="file" accept={ACCEPT} hidden onChange={(e) => replaceFile(e.target.files)} />
       <ConfirmDialog

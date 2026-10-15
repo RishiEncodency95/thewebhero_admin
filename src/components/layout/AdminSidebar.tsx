@@ -128,24 +128,26 @@ export function AdminSidebar() {
     .filter((g) => g.items.length > 0);
 
   return (
-    <Sidebar className="border-r border-slate-200 bg-white">
-      <SidebarHeader className="flex h-16 items-center justify-center border-b border-slate-100 bg-white px-5">
+    <Sidebar className="border-r border-slate-200 bg-slate-50 [&_[data-slot=sidebar-inner]]:bg-slate-50">
+      <SidebarHeader className="flex h-16 items-center justify-center border-b border-slate-200 bg-white px-5">
         <Image src="/logo-full.png" alt="TheWebHero" width={2172} height={724} className="h-12 w-auto object-contain" priority />
       </SidebarHeader>
-      <SidebarContent className="gap-0 px-3 py-3">
+      <SidebarContent className="gap-3 px-3 py-4">
         {groups.map((group) => (
           <Collapsible key={group.group} defaultOpen className="group/collapsible">
-            <SidebarGroup className="px-0 py-1.5">
+            <SidebarGroup className="overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
               <CollapsibleTrigger
                 nativeButton={false}
-                render={<SidebarGroupLabel className="flex h-7 w-full cursor-pointer items-center justify-between px-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-600" />}
+                render={
+                  <SidebarGroupLabel className="flex h-9 w-full cursor-pointer items-center justify-between rounded-none border-b border-slate-100 bg-slate-50/70 px-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 hover:text-slate-800 in-data-[panel-closed]:border-b-0" />
+                }
               >
                 {group.group}
-                <ChevronDown className="h-3.5 w-3.5 -rotate-90 transition-transform in-data-[panel-open]:rotate-0" />
+                <ChevronDown className="h-3.5 w-3.5 -rotate-90 text-slate-400 transition-transform in-data-[panel-open]:rotate-0" />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu className="mt-0.5 gap-0.5">
+                <SidebarGroupContent className="p-1.5">
+                  <SidebarMenu className="gap-0.5">
                     {group.items.map((item) => {
                       const active = isActive(item.url);
                       return (
@@ -153,15 +155,14 @@ export function AdminSidebar() {
                           <SidebarMenuButton
                             render={<Link href={item.url} />}
                             isActive={active}
-                            className={
+                            className={`relative h-9 rounded-lg px-2.5 ${
                               active
-                                ? 'h-9 rounded-lg bg-violet-50 font-semibold text-violet-700! hover:bg-violet-50 data-active:bg-violet-50 data-active:text-violet-700!'
-                                : 'h-9 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                            }
+                                ? 'bg-violet-50 font-semibold text-violet-700! hover:bg-violet-50 data-active:bg-violet-50 data-active:text-violet-700! before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-violet-600'
+                                : 'font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                            }`}
                           >
-                            <item.icon className={`h-4 w-4 shrink-0 ${active ? 'text-violet-600' : 'text-slate-400'}`} />
-                            <span className="flex-1 text-[13.5px]">{item.title}</span>
-                            {active && <span className="h-1.5 w-1.5 rounded-full bg-violet-600" />}
+                            <item.icon className={`h-[17px] w-[17px] shrink-0 ${active ? 'text-violet-600' : 'text-slate-400'}`} />
+                            <span className="flex-1 truncate text-[13.5px] leading-none">{item.title}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );

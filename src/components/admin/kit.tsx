@@ -4,8 +4,7 @@
 // search boxes and pagination look and size the same everywhere.
 
 import React, { useEffect, useState } from 'react';
-import { Inbox, Loader2, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Inbox, Loader2, Search } from 'lucide-react';
 import { api, ApiRequestError, Paginated } from '@/lib/api';
 
 export const cardClass = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm';
@@ -61,19 +60,81 @@ export function Segmented<T extends string>({ value, options, onChange }: { valu
   );
 }
 
-export function Pagination({ meta, onPage }: { meta: Paginated<unknown>['meta']; onPage: (page: number) => void }) {
-  if (meta.totalPages <= 1) return null;
+/** Default rows per page for every admin table. */
+export const PAGE_SIZE = 10;
+
+/** Page numbers to show: always first/last, a window around the current page, gaps as null. */
+function pageWindow(page: number, total: number): (number | null)[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = new Set([1, total, page - 1, page, page + 1]);
+  if (page <= 3) [2, 3, 4].forEach((p) => pages.add(p));
+  if (page >= total - 2) [total - 3, total - 2, total - 1].forEach((p) => pages.add(p));
+  const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out: (number | null)[] = [];
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push(null);
+    out.push(p);
+  });
+  return out;
+}
+
+const pageButton =
+  'flex h-9 min-w-9 items-center justify-center rounded-lg border px-2.5 text-[13px] font-semibold transition-colors disabled:pointer-events-none disabled:opacity-40';
+
+/** "Showing 1–10 of 73" plus first/prev/numbers/next/last. Renders nothing when there are no rows. */
+export function Pagination({ meta, onPage, noun = 'results' }: { meta: Paginated<unknown>['meta']; onPage: (page: number) => void; noun?: string }) {
+  if (!meta.total) return null;
+  const { page, totalPages, total, limit } = meta;
+  const from = (page - 1) * limit + 1;
+  const to = Math.min(page * limit, total);
+  const go = (p: number) => onPage(Math.min(Math.max(1, p), totalPages));
+  const idle = 'border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:text-violet-700';
+
   return (
-    <div className="mt-4 flex items-center justify-between text-[13px] text-slate-500">
-      <span>
-        {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)} of {meta.total}
-      </span>
-      <div className="flex gap-2">
-        <Button size="sm" variant="outline" className="rounded-lg" disabled={meta.page <= 1} onClick={() => onPage(meta.page - 1)}>Previous</Button>
-        <Button size="sm" variant="outline" className="rounded-lg" disabled={meta.page >= meta.totalPages} onClick={() => onPage(meta.page + 1)}>Next</Button>
-      </div>
+    <div className="mt-4 flex flex-col items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-5 py-3 shadow-sm sm:flex-row">
+      <p className="text-[13px] text-slate-500">
+        Showing <span className="font-semibold text-slate-800">{from}–{to}</span> of <span className="font-semibold text-slate-800">{total}</span> {noun}
+      </p>
+      {totalPages > 1 && (
+        <nav aria-label="Pagination" className="flex items-center gap-1.5">
+          <button type="button" aria-label="First page" className={`${pageButton} ${idle}`} disabled={page <= 1} onClick={() => go(1)}>
+            <ChevronsLeft className="h-4 w-4" />
+          </button>
+          <button type="button" aria-label="Previous page" className={`${pageButton} ${idle}`} disabled={page <= 1} onClick={() => go(page - 1)}>
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          {pageWindow(page, totalPages).map((p, i) =>
+            p === null ? (
+              <span key={`gap-${i}`} className="px-1 text-slate-400">…</span>
+            ) : (
+              <button
+                key={p}
+                type="button"
+                aria-current={p === page ? 'page' : undefined}
+                className={`${pageButton} ${p === page ? 'border-violet-600 bg-violet-600 text-white shadow-sm shadow-violet-200' : idle}`}
+                onClick={() => go(p)}
+              >
+                {p}
+              </button>
+            ),
+          )}
+          <button type="button" aria-label="Next page" className={`${pageButton} ${idle}`} disabled={page >= totalPages} onClick={() => go(page + 1)}>
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <button type="button" aria-label="Last page" className={`${pageButton} ${idle}`} disabled={page >= totalPages} onClick={() => go(totalPages)}>
+            <ChevronsRight className="h-4 w-4" />
+          </button>
+        </nav>
+      )}
     </div>
   );
+}
+
+/** Client-side paging for lists already in memory (same look as server paging). */
+export function paginate<T>(items: T[], page: number, limit = PAGE_SIZE) {
+  const totalPages = Math.max(1, Math.ceil(items.length / limit));
+  const current = Math.min(Math.max(1, page), totalPages);
+  return { items: items.slice((current - 1) * limit, current * limit), meta: { page: current, limit, total: items.length, totalPages } };
 }
 
 export function StatTile({ label, value, icon: Icon, tone = 'violet', hint }: { label: string; value: React.ReactNode; icon: React.ComponentType<{ className?: string }>; tone?: 'violet' | 'blue' | 'amber' | 'emerald' | 'rose'; hint?: React.ReactNode }) {

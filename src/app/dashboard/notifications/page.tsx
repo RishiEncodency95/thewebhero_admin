@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Bell, CheckCheck, ChevronRight, Inbox } from 'lucide-react';
 import { PageHeader } from '@/components/admin/PageHeader';
+import { PAGE_SIZE, Pagination } from '@/components/admin/kit';
 import { Button } from '@/components/ui/button';
 import { api, ApiRequestError, Paginated } from '@/lib/api';
 import { formatDate } from '@/components/leads/LeadsPage';
@@ -30,7 +31,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     let alive = true;
-    api<NotificationsResponse>('/notifications', { query: { page, limit: 20, unreadOnly: unreadOnly || undefined } })
+    api<NotificationsResponse>('/notifications', { query: { page, limit: PAGE_SIZE, unreadOnly: unreadOnly || undefined } })
       .then((d) => {
         if (!alive) return;
         setData(d);
@@ -128,21 +129,7 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      {data && data.meta.totalPages > 1 && (
-        <div className="flex items-center justify-between text-[13px] text-slate-500">
-          <span>
-            Page {data.meta.page} of {data.meta.totalPages}
-          </span>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="rounded-lg" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-              Previous
-            </Button>
-            <Button size="sm" variant="outline" className="rounded-lg" disabled={page >= data.meta.totalPages} onClick={() => setPage(page + 1)}>
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      {data && <Pagination meta={data.meta} onPage={setPage} noun="notifications" />}
     </div>
   );
 }

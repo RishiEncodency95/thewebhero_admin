@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { History } from 'lucide-react';
 import { PageHeader } from '@/components/admin/PageHeader';
-import { cardClass, EmptyState, ErrorBlock, formatDateTime, LoadingBlock, Pagination, rowClass, Segmented, tdClass, thClass, usePaginated } from '@/components/admin/kit';
+import { cardClass, EmptyState, ErrorBlock, formatDateTime, LoadingBlock, Pagination, rowClass, Segmented, tdClass, thClass, usePaginated, PAGE_SIZE } from '@/components/admin/kit';
 
 interface AuditLog {
   _id: string;
@@ -31,7 +31,7 @@ const label = (s: string) => s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUp
 export default function AuditLogsPage() {
   const [action, setAction] = useState<ActionFilter>('all');
   const [page, setPage] = useState(1);
-  const { data, error } = usePaginated<AuditLog>('/audit-logs', { page, limit: 30, action: action === 'all' ? undefined : action });
+  const { data, error } = usePaginated<AuditLog>('/audit-logs', { page, limit: PAGE_SIZE, action: action === 'all' ? undefined : action });
 
   return (
     <div>
@@ -92,7 +92,7 @@ export default function AuditLogsPage() {
           </div>
         </div>
       )}
-      {data && <Pagination meta={data.meta} onPage={setPage} />}
+      {data && <Pagination meta={data.meta} onPage={setPage} noun="entries" />}
     </div>
   );
 }

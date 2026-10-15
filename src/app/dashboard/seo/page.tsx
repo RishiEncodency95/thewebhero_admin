@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { AlertTriangle, ArrowRight, EyeOff, FileSearch, Gauge, Loader2, Search, Sparkles, Square, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/admin/PageHeader';
-import { cardClass, EmptyState, ErrorBlock, errorMessage, rowClass, SearchBox, Segmented, StatTile, tdClass, thClass } from '@/components/admin/kit';
+import { cardClass, EmptyState, ErrorBlock, errorMessage, rowClass, SearchBox, Segmented, StatTile, tdClass, thClass, paginate, Pagination } from '@/components/admin/kit';
 import { api, Paginated } from '@/lib/api';
 import { analyseSeo, ContentTypeDef, Doc, publicPath, scoreTone, SeoCheck, SeoValue } from '@/lib/cms';
 import { loadContentType } from '@/components/cms/useContentType';
@@ -71,6 +71,7 @@ export default function SeoCenterPage() {
   const [section, setSection] = useState('all');
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const defs = useRef(new Map<string, ContentTypeDef>());
   const [progress, setProgress] = useState<{ done: number; total: number; failed: number } | null>(null);
   const stopRef = useRef(false);
@@ -120,6 +121,7 @@ export default function SeoCenterPage() {
         (!q || r.title.toLowerCase().includes(q) || (r.path ?? '').includes(q)),
     );
   }, [rows, section, filter, search]);
+  const paged = paginate(visible, page);
 
   // Generates and saves AI SEO for every visible page below 100, a few at a time.
   const optimize = async () => {
@@ -201,7 +203,7 @@ export default function SeoCenterPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <select value={section} onChange={(e) => setSection(e.target.value)} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[13.5px] font-medium text-slate-700 outline-none focus:border-violet-400">
+        <select value={section} onChange={(e) => { setSection(e.target.value); setPage(1); }} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[13.5px] font-medium text-slate-700 outline-none focus:border-violet-400">
           <option value="all">All sections</option>
           {sections.map((s) => (
             <option key={s.resource} value={s.resource}>{s.label}</option>
@@ -209,11 +211,11 @@ export default function SeoCenterPage() {
         </select>
         <Segmented<Filter>
           value={filter}
-          onChange={setFilter}
+          onChange={(v) => { setFilter(v); setPage(1); }}
           options={[{ value: 'all', label: 'All' }, { value: 'bad', label: 'Poor' }, { value: 'warn', label: 'OK' }, { value: 'good', label: 'Good' }]}
         />
         <div className="ml-auto w-full sm:w-auto">
-          <SearchBox value={search} onChange={setSearch} placeholder="Search title or URL…" />
+          <SearchBox value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search title or URL…" />
         </div>
       </div>
 
@@ -240,7 +242,7 @@ export default function SeoCenterPage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.slice(0, 300).map((r) => (
+                {paged.items.map((r) => (
                   <tr key={`${r.resource}/${r.id}`} className={rowClass}>
                     <td className={`${tdClass} w-20`}>
                       <span className={`inline-flex h-8 min-w-10 items-center justify-center rounded-lg px-2 text-[13px] font-bold ring-1 ${SCORE_STYLE[scoreTone(r.score)]}`}>{r.score}</span>
@@ -274,9 +276,9 @@ export default function SeoCenterPage() {
               </tbody>
             </table>
           </div>
-          {visible.length > 300 && <p className="border-t border-slate-100 px-5 py-3 text-[12.5px] text-slate-500">Showing the 300 lowest scores — narrow the filters to see more.</p>}
         </div>
       )}
+      {rows && <Pagination meta={paged.meta} onPage={setPage} noun="pages" />}
     </div>
   );
 }

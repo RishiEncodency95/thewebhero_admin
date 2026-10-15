@@ -24,8 +24,7 @@ import {
   tdClass,
   thClass,
   useDebounced,
-  usePaginated,
-} from '@/components/admin/kit';
+  usePaginated, PAGE_SIZE } from '@/components/admin/kit';
 import { api, ApiRequestError, Paginated } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -168,7 +167,7 @@ export default function UsersPage() {
   const [searchInput, setSearchInput] = useState('');
   const search = useDebounced(searchInput.trim());
   const [page, setPage] = useState(1);
-  const { data, error, reload } = usePaginated<UserRow>('/users', { page, limit: 20, search });
+  const { data, error, reload } = usePaginated<UserRow>('/users', { page, limit: PAGE_SIZE, search });
   const [roles, setRoles] = useState<Role[]>([]);
   const [editing, setEditing] = useState<UserRow | null | 'new'>(null);
   const [toDelete, setToDelete] = useState<UserRow | null>(null);
@@ -289,7 +288,7 @@ export default function UsersPage() {
           </div>
         </div>
       )}
-      {data && <Pagination meta={data.meta} onPage={setPage} />}
+      {data && <Pagination meta={data.meta} onPage={setPage} noun="users" />}
 
       <UserDialog
         open={editing !== null}

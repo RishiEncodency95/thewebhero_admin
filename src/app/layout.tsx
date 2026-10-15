@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Plus Jakarta Sans: clean, slightly rounded UI face that stays readable at small sizes.
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -16,8 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Admin UI Template",
-  description: "Reusable admin dashboard UI template — layout and components only, no API wired in.",
+  title: { default: "TheWebHero Admin", template: "%s | TheWebHero Admin" },
+  description: "Content, SEO and lead management for thewebhero.in.",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({
@@ -29,7 +33,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Providers>

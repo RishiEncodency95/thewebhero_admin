@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import {
-  cardClass, EmptyState, ErrorBlock, errorMessage, formatDateTime, iconButtonClass, LoadingBlock, Pagination, rowClass, SearchBox, Segmented, StatTile, tdClass, thClass, useDebounced, usePaginated,
-} from '@/components/admin/kit';
+  cardClass, EmptyState, ErrorBlock, errorMessage, formatDateTime, iconButtonClass, LoadingBlock, Pagination, rowClass, SearchBox, Segmented, StatTile, tdClass, thClass, useDebounced, usePaginated, PAGE_SIZE } from '@/components/admin/kit';
 import { api, Paginated } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -27,7 +26,7 @@ export default function NewsletterPage() {
   const [searchInput, setSearchInput] = useState('');
   const search = useDebounced(searchInput.trim());
   const [page, setPage] = useState(1);
-  const { data, error, reload } = usePaginated<Subscriber>('/newsletter', { page, limit: 25, search, isActive: filter === 'all' ? undefined : filter });
+  const { data, error, reload } = usePaginated<Subscriber>('/newsletter', { page, limit: PAGE_SIZE, search, isActive: filter === 'all' ? undefined : filter });
   const totals = {
     all: usePaginated<Subscriber>('/newsletter', { limit: 1 }).data?.meta.total,
     active: usePaginated<Subscriber>('/newsletter', { limit: 1, isActive: 'true' }).data?.meta.total,
@@ -150,7 +149,7 @@ export default function NewsletterPage() {
           </div>
         </div>
       )}
-      {data && <Pagination meta={data.meta} onPage={setPage} />}
+      {data && <Pagination meta={data.meta} onPage={setPage} noun="subscribers" />}
 
       <ConfirmDialog
         open={!!toDelete}
