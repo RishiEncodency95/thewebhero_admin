@@ -1,14 +1,17 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import Link from 'next/link';
-import { AlertTriangle, ArrowRight, EyeOff, FileSearch, Gauge, Loader2, Search, Wrench } from 'lucide-react';
+import { AlertTriangle, ArrowRight, EyeOff, FileSearch, Gauge, Loader2, Search, Sparkles, Square, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { cardClass, EmptyState, ErrorBlock, errorMessage, rowClass, SearchBox, Segmented, StatTile, tdClass, thClass } from '@/components/admin/kit';
 import { api, Paginated } from '@/lib/api';
 import { analyseSeo, ContentTypeDef, Doc, publicPath, scoreTone, SeoCheck, SeoValue } from '@/lib/cms';
 import { loadContentType } from '@/components/cms/useContentType';
+import { useAuth } from '@/lib/auth';
+import { PRIMARY_BUTTON_CLASS } from '@/components/admin/buttons';
 
 interface AuditRow {
   resource: string;
@@ -68,6 +71,10 @@ export default function SeoCenterPage() {
   const [section, setSection] = useState('all');
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
+  const defs = useRef(new Map<string, ContentTypeDef>());
+  const [progress, setProgress] = useState<{ done: number; total: number; failed: number } | null>(null);
+  const stopRef = useRef(false);
+  const { can } = useAuth();
 
   useEffect(() => {
     let alive = true;
@@ -76,7 +83,10 @@ export default function SeoCenterPage() {
         const types = await api<ContentTypeDef[]>('/content-types');
         const withSeo = types.filter((t) => t.kind === 'collection' && t.fields.some((f) => f.type === 'seo'));
         // Keep the definitions cached for the editor screens we link to.
-        withSeo.forEach((t) => loadContentType(t.resource));
+        withSeo.forEach((t) => {
+          loadContentType(t.resource);
+          defs.current.set(t.resource, t);
+        });
         const results = await Promise.all(withSeo.map(async (def) => (await fetchAll(def.resource)).map((d) => audit(def, d))));
         if (!alive) return;
         setSections(withSeo.map((t) => ({ resource: t.resource, label: t.labelPlural })));
@@ -111,19 +121,77 @@ export default function SeoCenterPage() {
     );
   }, [rows, section, filter, search]);
 
+  // Generates and saves AI SEO for every visible page below 100, a few at a time.
+  const optimize = async () => {
+    const targets = visible.filter((r) => r.score < 100 && can(r.resource, 'update'));
+    if (!targets.length) return toast.info('Every page in this view already scores 100.');
+    if (!window.confirm(`Write SEO with AI for ${targets.length} page${targets.length > 1 ? 's' : ''}? Existing meta titles and descriptions on these pages are replaced.`)) return;
+    stopRef.current = false;
+    let done = 0;
+    let failed = 0;
+    setProgress({ done, total: targets.length, failed });
+    const queue = [...targets];
+    const worker = async (): Promise<void> => {
+      const row = queue.shift();
+      if (!row || stopRef.current) return;
+      try {
+        await api(`/seo/optimize/${row.resource}/${row.id}`, { method: 'POST' });
+        const def = defs.current.get(row.resource);
+        const fresh = await api<Doc>(`/${row.resource}/${row.id}`, { query: { populate: 'false' } });
+        if (def) setRows((rs) => rs?.map((r) => (r.resource === row.resource && r.id === row.id ? audit(def, fresh) : r)) ?? rs);
+      } catch {
+        failed++;
+      }
+      done++;
+      setProgress({ done, total: targets.length, failed });
+      return worker();
+    };
+    await Promise.all([worker(), worker(), worker()]);
+    toast.success(`SEO written for ${done - failed} page${done - failed === 1 ? '' : 's'}${failed ? ` · ${failed} failed` : ''}`);
+    setProgress(null);
+  };
+
   return (
     <div>
       <PageHeader
         title="SEO Center"
-        description="Every page's meta title, description and search visibility in one place — worst scores first. Click Fix to open the page's SEO tab."
+        description="Every page's meta title, description and search visibility in one place — worst scores first. Optimize with AI fills the SEO of every page in the current view; Fix opens one page's SEO tab."
         actions={
-          <Link href="/dashboard/content/seo-pages">
-            <Button variant="outline" className="h-10 rounded-xl px-4">
-              <FileSearch className="mr-1.5 h-4 w-4" /> Static page SEO
-            </Button>
-          </Link>
+          <>
+            <Link href="/dashboard/content/seo-pages">
+              <Button variant="outline" className="h-10 rounded-xl px-4">
+                <FileSearch className="mr-1.5 h-4 w-4" /> Static page SEO
+              </Button>
+            </Link>
+            {progress ? (
+              <Button variant="outline" className="h-10 rounded-xl px-4" onClick={() => (stopRef.current = true)}>
+                <Square className="mr-1.5 h-4 w-4" /> Stop ({progress.done}/{progress.total})
+              </Button>
+            ) : (
+              <Button className={`h-10 rounded-xl px-4 ${PRIMARY_BUTTON_CLASS}`} disabled={!rows} onClick={optimize}>
+                <Sparkles className="mr-1.5 h-4 w-4" /> Optimize with AI
+              </Button>
+            )}
+          </>
         }
       />
+
+      {progress && (
+        <div className={`mb-6 p-5 ${cardClass}`}>
+          <div className="mb-2 flex items-center justify-between text-[13.5px]">
+            <span className="flex items-center gap-2 font-semibold text-slate-800">
+              <Loader2 className="h-4 w-4 animate-spin text-violet-600" /> Writing SEO with AI…
+            </span>
+            <span className="text-slate-500">
+              {progress.done} of {progress.total}
+              {progress.failed > 0 && <span className="text-red-600"> · {progress.failed} failed</span>}
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 transition-all" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
+          </div>
+        </div>
+      )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile label="Average SEO score" value={stats ? `${stats.average}/100` : '—'} icon={Gauge} tone={stats ? (stats.average >= 80 ? 'emerald' : stats.average >= 50 ? 'amber' : 'rose') : 'violet'} hint="Published pages only" />

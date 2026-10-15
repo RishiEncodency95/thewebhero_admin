@@ -172,7 +172,7 @@ export function analyseSeo(input: { seo?: SeoValue; title?: string; summary?: st
     }
   }
 
-  if (!seo.ogImage) checks.push({ level: 'warn', message: 'No social share image — the site default is used.' });
+  checks.push(seo.ogImage ? { level: 'good', message: 'Custom social share image set.' } : { level: 'good', message: 'Branded share image is generated from the title.' });
 
   const weight = { good: 1, warn: 0.5, bad: 0 };
   const score = checks.length ? Math.round((checks.reduce((n, c) => n + weight[c.level], 0) / checks.length) * 100) : 0;

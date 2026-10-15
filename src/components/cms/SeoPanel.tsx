@@ -56,11 +56,17 @@ export function SeoPanel({ value, onChange, doc, resource, error }: FieldProps) 
     if (!fb.title) return toast.error('Add a title first, then generate SEO.');
     setGenerating(true);
     try {
-      const s = await api<{ seoTitle: string; seoDescription: string; keywords: string[]; ogImageAlt: string }>('/seo/suggest', {
+      const s = await api<{ focusKeyword: string; seoTitle: string; seoDescription: string; keywords: string[]; ogImageAlt: string }>('/seo/suggest', {
         method: 'POST',
-        body: { title: fb.title, content: `${fb.summary}\n\n${fb.body}`.slice(0, 15000) },
+        body: {
+          title: fb.title,
+          content: `${fb.summary}\n\n${fb.body}`.slice(0, 15000),
+          slug: typeof doc.slug === 'string' && doc.slug ? doc.slug : undefined,
+          path,
+          pageType: resource,
+        },
       });
-      set({ title: s.seoTitle, description: s.seoDescription, keywords: s.keywords, ogImageAlt: s.ogImageAlt || seo.ogImageAlt });
+      set({ title: s.seoTitle, description: s.seoDescription, focusKeyword: s.focusKeyword || seo.focusKeyword, keywords: s.keywords, ogImageAlt: seo.ogImageAlt || s.ogImageAlt });
       toast.success('AI suggestion applied — review it before saving.');
     } catch (err) {
       toast.error(err instanceof ApiRequestError ? err.message : 'Could not generate SEO. Is an AI key configured on the server?');
@@ -106,7 +112,7 @@ export function SeoPanel({ value, onChange, doc, resource, error }: FieldProps) 
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={seo.ogImage} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <span className="text-[12px] text-slate-400">Site default image</span>
+                  <span className="text-[12px] text-slate-400">Branded image generated from the title</span>
                 )}
               </div>
               <div className="bg-slate-50 px-4 py-3">
