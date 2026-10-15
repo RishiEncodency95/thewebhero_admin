@@ -232,7 +232,7 @@ function LeadsPageInner({ resource, title, description, nameKey, headlineKey, co
   const whatsapp = phone.replace(/[^\d]/g, '');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         title={title}
         description={description}

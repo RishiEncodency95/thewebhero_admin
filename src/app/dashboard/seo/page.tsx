@@ -195,14 +195,14 @@ export default function SeoCenterPage() {
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile label="Average SEO score" value={stats ? `${stats.average}/100` : '—'} icon={Gauge} tone={stats ? (stats.average >= 80 ? 'emerald' : stats.average >= 50 ? 'amber' : 'rose') : 'violet'} hint="Published pages only" />
         <StatTile label="Need work (score < 50)" value={stats?.needsWork ?? '—'} icon={Wrench} tone="rose" />
         <StatTile label="No meta description" value={stats?.missingDescription ?? '—'} icon={AlertTriangle} tone="amber" hint="Falls back to the summary text" />
         <StatTile label="Hidden (noindex)" value={stats?.noindex ?? '—'} icon={EyeOff} tone="blue" />
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="mb-3 flex flex-wrap items-center gap-3">
         <select value={section} onChange={(e) => { setSection(e.target.value); setPage(1); }} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[13.5px] font-medium text-slate-700 outline-none focus:border-violet-400">
           <option value="all">All sections</option>
           {sections.map((s) => (

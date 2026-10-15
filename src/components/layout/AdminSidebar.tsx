@@ -14,8 +14,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ExternalLink, Globe } from 'lucide-react';
 import {
   LayoutDashboard,
   Bell,
@@ -49,7 +50,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/lib/auth';
 
-interface NavItem {
+export interface NavItem {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -59,7 +60,7 @@ interface NavItem {
 
 const content = (resource: string, title: string, icon: NavItem['icon']): NavItem => ({ title, url: `/dashboard/content/${resource}`, icon, resource });
 
-const navItems: { group: string; items: NavItem[] }[] = [
+export const navItems: { group: string; items: NavItem[] }[] = [
   {
     group: 'Overview',
     items: [{ title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard }],
@@ -118,6 +119,8 @@ const navItems: { group: string; items: NavItem[] }[] = [
   },
 ];
 
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://thewebhero.in').replace(/\/+$/, '');
+
 export function AdminSidebar() {
   const pathname = usePathname();
   const { can } = useAuth();
@@ -128,18 +131,21 @@ export function AdminSidebar() {
     .filter((g) => g.items.length > 0);
 
   return (
-    <Sidebar className="border-r border-slate-200 bg-slate-50 [&_[data-slot=sidebar-inner]]:bg-slate-50">
-      <SidebarHeader className="flex h-16 items-center justify-center border-b border-slate-200 bg-white px-5">
-        <Image src="/logo-full.png" alt="TheWebHero" width={2172} height={724} className="h-12 w-auto object-contain" priority />
+    <Sidebar className="border-r border-slate-200 [&_[data-slot=sidebar-inner]]:bg-[#f8f9fc]">
+      <SidebarHeader className="h-16 items-center justify-center border-b border-slate-200 bg-white px-4">
+        <Link href="/dashboard" className="flex w-full items-center justify-center">
+          <Image src="/logo-full.png" alt="TheWebHero" width={2172} height={724} className="h-[60px] w-auto max-w-full object-contain" priority />
+        </Link>
       </SidebarHeader>
-      <SidebarContent className="gap-3 px-3 py-4">
+
+      <SidebarContent className="gap-3 px-3 py-4 [scrollbar-color:rgba(15,23,42,0.15)_transparent] [scrollbar-width:thin]">
         {groups.map((group) => (
           <Collapsible key={group.group} defaultOpen className="group/collapsible">
-            <SidebarGroup className="overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <SidebarGroup className="overflow-hidden rounded-xl border border-slate-200 bg-white p-0 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
               <CollapsibleTrigger
                 nativeButton={false}
                 render={
-                  <SidebarGroupLabel className="flex h-9 w-full cursor-pointer items-center justify-between rounded-none border-b border-slate-100 bg-slate-50/70 px-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 hover:text-slate-800 in-data-[panel-closed]:border-b-0" />
+                  <SidebarGroupLabel className="flex h-9 w-full cursor-pointer items-center justify-between rounded-none border-b border-slate-100 bg-slate-50/80 px-3 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-500 hover:text-slate-800 in-data-[panel-closed]:border-b-0" />
                 }
               >
                 {group.group}
@@ -155,13 +161,13 @@ export function AdminSidebar() {
                           <SidebarMenuButton
                             render={<Link href={item.url} />}
                             isActive={active}
-                            className={`relative h-9 rounded-lg px-2.5 ${
+                            className={`h-9 rounded-lg px-2.5 transition-all ${
                               active
-                                ? 'bg-violet-50 font-semibold text-violet-700! hover:bg-violet-50 data-active:bg-violet-50 data-active:text-violet-700! before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-violet-600'
-                                : 'font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                                ? 'bg-gradient-to-r from-violet-600 to-indigo-500 font-semibold text-white! shadow-md shadow-violet-500/25 hover:from-violet-600 hover:to-indigo-500 data-active:bg-transparent data-active:text-white!'
+                                : 'font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700!'
                             }`}
                           >
-                            <item.icon className={`h-[17px] w-[17px] shrink-0 ${active ? 'text-violet-600' : 'text-slate-400'}`} />
+                            <item.icon className={`h-[17px] w-[17px] shrink-0 ${active ? 'text-white' : 'text-slate-400'}`} />
                             <span className="flex-1 truncate text-[13.5px] leading-none">{item.title}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -174,6 +180,20 @@ export function AdminSidebar() {
           </Collapsible>
         ))}
       </SidebarContent>
+
+      <SidebarFooter className="border-t border-slate-200 bg-white p-3">
+        <a
+          href={SITE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-10 items-center justify-between rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-700 transition-colors hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
+        >
+          <span className="flex items-center gap-2.5">
+            <Globe className="h-4 w-4 text-violet-600" /> View website
+          </span>
+          <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+        </a>
+      </SidebarFooter>
     </Sidebar>
   );
 }

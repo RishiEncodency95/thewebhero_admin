@@ -43,7 +43,7 @@ function ListTable({ def, items, onDelete, canDelete, canEdit }: { def: ContentT
   const editHref = (d: Doc) => `/dashboard/content/${def.resource}/${d.id ?? d._id}`;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_2px_8px_-2px_rgba(16,24,40,0.06)]">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-[13.5px]">
           <thead>
@@ -66,7 +66,7 @@ function ListTable({ def, items, onDelete, canDelete, canEdit }: { def: ContentT
                 summary: def.summaryField ? String(d[def.summaryField] ?? '') : '',
               });
               return (
-                <tr key={String(d.id ?? d._id)} onClick={() => canEdit && router.push(editHref(d))} className={`h-[60px] ${canEdit ? 'cursor-pointer hover:bg-violet-50/40' : ''}`}>
+                <tr key={String(d.id ?? d._id)} onClick={() => canEdit && router.push(editHref(d))} className={`h-[52px] ${canEdit ? 'cursor-pointer hover:bg-violet-50/40' : ''}`}>
                   {def.listColumns.map((col, i) => (
                     <td key={col} className={`max-w-[320px] px-4 ${i === 0 ? 'pl-5 font-semibold text-slate-900' : ''}`}>
                       {i === 0 ? (
@@ -197,7 +197,7 @@ export function ContentListScreen({ resource }: { resource: string }) {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex rounded-xl border border-slate-200 bg-white p-1">
           {(['all', 'published', 'draft'] as const).map((s) => (
             <button

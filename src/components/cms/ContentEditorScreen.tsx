@@ -152,10 +152,10 @@ export function ContentEditorScreen({ resource, id, initialTab }: { resource: st
         }
       />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <ContentForm resource={resource} fields={def.fields} value={doc} onChange={setDoc} errors={errors} hideGroups={[PUBLISH_GROUP]} initialGroup={initialTab} />
 
-        <aside className="space-y-5 xl:sticky xl:top-20 xl:self-start">
+        <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
           {publishFields.length > 0 && (
             <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
               <h2 className="mb-4 text-[13px] font-bold uppercase tracking-wider text-slate-500">Publish</h2>
@@ -223,7 +223,7 @@ export function ContentEditorScreen({ resource, id, initialTab }: { resource: st
               <Button variant="outline" className="h-10 rounded-xl px-4" disabled={!dirty || saving} onClick={() => { setDoc(saved); setErrors({}); }}>
                 Discard
               </Button>
-              <Button className="h-10 min-w-32 rounded-xl bg-violet-600 px-5 text-white hover:bg-violet-700" disabled={saving || (!dirty && !isNew)} onClick={save}>
+              <Button className="h-10 min-w-32 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-500 px-5 text-white shadow-md shadow-violet-500/25 hover:opacity-95" disabled={saving || (!dirty && !isNew)} onClick={save}>
                 {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
                 {isNew ? `Create ${lowerLabel(def.label)}` : 'Save changes'}
               </Button>

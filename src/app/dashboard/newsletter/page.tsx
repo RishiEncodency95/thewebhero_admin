@@ -87,13 +87,13 @@ export default function NewsletterPage() {
         }
       />
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile label="Total sign-ups" value={totals.all ?? '—'} icon={Users} tone="violet" />
         <StatTile label="Active subscribers" value={totals.active ?? '—'} icon={UserCheck} tone="emerald" />
         <StatTile label="Unsubscribed" value={totals.all !== undefined && totals.active !== undefined ? totals.all - totals.active : '—'} icon={UserMinus} tone="rose" />
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <Segmented<Filter>
           value={filter}
           onChange={(v) => { setFilter(v); setPage(1); }}

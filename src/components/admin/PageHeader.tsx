@@ -14,10 +14,10 @@ interface PageHeaderProps {
 /** The single header style used at the top of every admin screen. */
 export function PageHeader({ title, description, crumbs, actions }: PageHeaderProps) {
   return (
-    <div className="mb-6 flex flex-col gap-4 border-b border-slate-200/70 pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {crumbs && crumbs.length > 0 && (
-          <nav aria-label="Breadcrumb" className="mb-2 flex flex-wrap items-center gap-1 text-[12.5px] text-slate-500">
+          <nav aria-label="Breadcrumb" className="mb-1.5 flex flex-wrap items-center gap-1 text-[12.5px] text-slate-500">
             {crumbs.map((c, i) => (
               <React.Fragment key={`${c.label}-${i}`}>
                 {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-slate-300" />}
@@ -32,8 +32,8 @@ export function PageHeader({ title, description, crumbs, actions }: PageHeaderPr
             ))}
           </nav>
         )}
-        <h1 className="truncate text-[26px] font-bold tracking-tight text-slate-900">{title}</h1>
-        {description && <p className="mt-1 max-w-3xl text-[14px] text-slate-500">{description}</p>}
+        <h1 className="truncate text-[24px] font-extrabold tracking-[-0.02em] text-slate-900">{title}</h1>
+        {description && <p className="mt-1 max-w-3xl text-[14px] leading-relaxed text-slate-500">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </div>

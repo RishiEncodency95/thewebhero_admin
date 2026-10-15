@@ -7,10 +7,10 @@ import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Inbox, Loader2, Search } from 'lucide-react';
 import { api, ApiRequestError, Paginated } from '@/lib/api';
 
-export const cardClass = 'rounded-2xl border border-slate-200/80 bg-white shadow-sm';
+export const cardClass = 'rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_2px_8px_-2px_rgba(16,24,40,0.06)]';
 export const thClass = 'h-11 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 first:pl-5 last:pr-5';
 export const tdClass = 'px-4 first:pl-5 last:pr-5';
-export const rowClass = 'h-[60px] border-t border-slate-100';
+export const rowClass = 'h-[52px] border-t border-slate-100 transition-colors hover:bg-violet-50/30';
 export const iconButtonClass = 'flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40';
 
 export function LoadingBlock({ className = 'h-64' }: { className?: string }) {
@@ -91,7 +91,7 @@ export function Pagination({ meta, onPage, noun = 'results' }: { meta: Paginated
   const idle = 'border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:text-violet-700';
 
   return (
-    <div className="mt-4 flex flex-col items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-5 py-3 shadow-sm sm:flex-row">
+    <div className="mt-3 flex flex-col items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 py-2.5 shadow-sm sm:flex-row">
       <p className="text-[13px] text-slate-500">
         Showing <span className="font-semibold text-slate-800">{from}–{to}</span> of <span className="font-semibold text-slate-800">{total}</span> {noun}
       </p>
@@ -146,13 +146,13 @@ export function StatTile({ label, value, icon: Icon, tone = 'violet', hint }: { 
     rose: 'bg-rose-50 text-rose-600',
   };
   return (
-    <div className={`flex h-[92px] items-center gap-4 p-5 ${cardClass}`}>
-      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${tones[tone]}`}>
+    <div className={`flex h-[80px] items-center gap-3.5 px-4 py-3 ${cardClass}`}>
+      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tones[tone]}`}>
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
         <p className="truncate text-[13px] text-slate-500">{label}</p>
-        <p className="mt-0.5 text-[24px] font-bold leading-tight text-slate-900">{value}</p>
+        <p className="mt-0.5 text-[22px] font-bold leading-tight text-slate-900">{value}</p>
         {hint && <p className="truncate text-[12px] text-slate-400">{hint}</p>}
       </div>
     </div>

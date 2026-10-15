@@ -136,7 +136,7 @@ export default function MediaLibraryPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <Segmented<Kind>
           value={kind}
           onChange={(v) => { setKind(v); setPage(1); }}

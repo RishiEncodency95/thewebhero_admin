@@ -106,7 +106,7 @@ export default function DashboardPage() {
   const typeLabel = (k: RecentLead['kind']) => LEAD_TYPES.find((t) => t.resource === k)?.label.replace(/s$/, '') ?? k;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         title={`${greeting()}, ${user?.name?.split(' ')[0] ?? 'there'}`}
         description={newLeads ? `You have ${newLeads} new lead${newLeads > 1 ? 's' : ''} waiting for a reply.` : 'Here is what is happening on thewebhero.in.'}
@@ -126,8 +126,8 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <section className={`overflow-hidden xl:col-span-2 ${cardClass}`}>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <section className={`self-start overflow-hidden xl:col-span-2 ${cardClass}`}>
           <div className="flex h-14 items-center justify-between border-b border-slate-100 px-5">
             <h2 className="text-[15px] font-bold text-slate-900">Latest enquiries</h2>
             <Link href="/dashboard/quote-requests" className="flex items-center gap-1 text-[13px] font-semibold text-violet-700 hover:underline">
@@ -139,7 +139,7 @@ export default function DashboardPage() {
               {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-12 animate-pulse rounded-xl bg-slate-100" />)}
             </div>
           ) : recent.length === 0 ? (
-            <div className="flex h-56 flex-col items-center justify-center gap-2 text-slate-400">
+            <div className="flex h-44 flex-col items-center justify-center gap-2 text-slate-400">
               <Inbox className="h-7 w-7" />
               <span className="text-sm">No enquiries yet — they appear here as soon as someone submits a form.</span>
             </div>
@@ -164,7 +164,7 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           <section className={`p-5 ${cardClass}`}>
             <h2 className="text-[15px] font-bold text-slate-900">Lead pipeline</h2>
             <p className="mt-0.5 text-[12.5px] text-slate-500">All forms combined · {totalLeads} total</p>

@@ -100,7 +100,7 @@ export function SingletonScreen({ resource }: { resource: string }) {
               <Button variant="outline" className="h-10 rounded-xl px-4" disabled={!dirty || saving} onClick={() => { setDoc(saved); setErrors({}); }}>
                 Discard
               </Button>
-              <Button className="h-10 min-w-32 rounded-xl bg-violet-600 px-5 text-white hover:bg-violet-700" disabled={saving || !dirty} onClick={save}>
+              <Button className="h-10 min-w-32 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-500 px-5 text-white shadow-md shadow-violet-500/25 hover:opacity-95" disabled={saving || !dirty} onClick={save}>
                 {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
                 Save changes
               </Button>

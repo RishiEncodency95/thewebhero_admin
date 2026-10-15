@@ -208,7 +208,7 @@ export default function UsersPage() {
         }
       />
 
-      <div className="mb-4 flex justify-end">
+      <div className="mb-3 flex justify-end">
         <SearchBox
           value={searchInput}
           onChange={(v) => {

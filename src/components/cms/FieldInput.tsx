@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { api, apiUpload, ApiRequestError, Paginated } from '@/lib/api';
-import { Doc, emptyRecord, FieldDef, setIn, isWideField } from '@/lib/cms';
+import { Doc, emptyRecord, FieldDef, setIn, isWideField, cleanSlugInput, isUnsaved, slugify, withAutoSlug } from '@/lib/cms';
 import { SeoPanel } from './SeoPanel';
 
 export interface FieldProps {
@@ -46,7 +46,6 @@ export function FieldShell({ field, error, count, children }: { field: FieldDef;
   );
 }
 
-const slugify = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 150);
 
 // ── Simple inputs ───────────────────────────────────────────────────────
 
@@ -60,15 +59,25 @@ function TextInput({ field, value, onChange, error, doc }: FieldProps) {
           type={type}
           value={field.type === 'date' ? str.slice(0, 10) : str}
           placeholder={field.placeholder ?? (field.type === 'icon' ? 'e.g. Code2' : undefined)}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(field.type === 'slug' ? cleanSlugInput(e.target.value) : e.target.value)}
+          onBlur={field.type === 'slug' ? () => str && onChange(slugify(str)) : undefined}
           className={`${inputClass} ${field.type === 'slug' ? 'font-mono text-[13px]' : ''}`}
         />
         {field.type === 'slug' && field.from && (
-          <Button type="button" variant="outline" className="h-10 shrink-0 rounded-xl" onClick={() => onChange(slugify(String(doc[field.from!] ?? '')))}>
+          <Button
+            type="button"
+            variant="outline"
+            title={`Create the slug from ${field.from}`}
+            className="h-10 shrink-0 rounded-xl"
+            onClick={() => onChange(slugify(String(doc[field.from!] ?? '')))}
+          >
             <Wand2 className="mr-1.5 h-3.5 w-3.5" /> Generate
           </Button>
         )}
       </div>
+      {field.type === 'slug' && field.from && isUnsaved(doc) && (
+        <p className="mt-1.5 text-[12px] text-slate-400">Fills in automatically from the {field.from} — edit it to set your own.</p>
+      )}
     </FieldShell>
   );
 }
@@ -324,7 +333,7 @@ function ListInput({ field, value, onChange, error, doc, resource }: FieldProps)
               <div className="grid grid-cols-1 gap-x-5 gap-y-4 border-t border-slate-100 bg-slate-50/50 p-4 md:grid-cols-2">
                 {sub.map((sf) => (
                   <div key={sf.key} className={isWideField(sf) ? 'md:col-span-2' : ''}>
-                    <FieldInput field={sf} value={row[sf.key]} doc={doc} resource={resource} onChange={(v) => onChange(setIn(rows, [i, sf.key], v))} />
+                    <FieldInput field={sf} value={row[sf.key]} doc={doc} resource={resource} onChange={(v) => onChange(setIn(rows, [i], withAutoSlug(row, sub, sf.key, v, isUnsaved(doc))))} />
                   </div>
                 ))}
               </div>
@@ -357,7 +366,7 @@ function ObjectInput({ field, value, onChange, error, doc, resource }: FieldProp
       {error && <p className="text-[12px] font-medium text-red-600 md:col-span-2">{error}</p>}
       {(field.of ?? []).map((sf) => (
         <div key={sf.key} className={isWideField(sf) ? 'md:col-span-2' : ''}>
-          <FieldInput field={sf} value={obj[sf.key]} doc={doc} resource={resource} onChange={(v) => onChange({ ...obj, [sf.key]: v })} />
+          <FieldInput field={sf} value={obj[sf.key]} doc={doc} resource={resource} onChange={(v) => onChange(withAutoSlug(obj, field.of ?? [], sf.key, v, isUnsaved(doc)))} />
         </div>
       ))}
     </fieldset>

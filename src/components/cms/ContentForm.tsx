@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Doc, FieldDef, isWideField } from '@/lib/cms';
+import { Doc, FieldDef, isUnsaved, isWideField, withAutoSlug } from '@/lib/cms';
 import { FieldInput } from './FieldInput';
 
 interface ContentFormProps {
@@ -40,7 +40,7 @@ export function ContentForm({ resource, fields, value, onChange, errors, hideGro
   const groupHasError = (g: string) => groups.find(([n]) => n === g)?.[1].some((f) => errors[f.key]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_2px_8px_-2px_rgba(16,24,40,0.06)]">
       {groups.length > 1 && (
         <div className="flex gap-1 overflow-x-auto border-b border-slate-100 bg-slate-50/70 px-3 pt-3">
           {groups.map(([g]) => (
@@ -59,7 +59,7 @@ export function ContentForm({ resource, fields, value, onChange, errors, hideGro
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-5 gap-y-4 p-5 md:grid-cols-2">
         {current?.[1].map((field) => (
           <div key={field.key} className={isWideField(field) ? 'md:col-span-2' : ''}>
             <FieldInput
@@ -68,7 +68,7 @@ export function ContentForm({ resource, fields, value, onChange, errors, hideGro
               error={errors[field.key]}
               doc={value}
               resource={resource}
-              onChange={(v) => onChange({ ...value, [field.key]: v })}
+              onChange={(v) => onChange(withAutoSlug(value, fields, field.key, v, isUnsaved(value)))}
             />
           </div>
         ))}

@@ -69,6 +69,37 @@ export function publicPath(resource: string, doc: Doc): string | null {
   return prefixes[resource] ? `${prefixes[resource]}${slug}` : null;
 }
 
+/** "My Blog Post!" -> "my-blog-post" (same rules as the API). */
+export const slugify = (s: string) =>
+  s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 150);
+
+/** While typing a slug: lowercase, hyphens only (a trailing hyphen is allowed so words can be added). */
+export const cleanSlugInput = (s: string) => s.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-{2,}/g, '-').replace(/^-+/, '').slice(0, 150);
+
+/** A record that has never been saved (no id yet). */
+export const isUnsaved = (doc: Doc) => !doc._id && !doc.id;
+
+/**
+ * Sets `key` on `record` and keeps any slug generated from it in sync, as long
+ * as the slug is still "automatic" (empty, or exactly what the old value
+ * produced). Only for records that were never saved: changing a live page's
+ * slug would change its URL.
+ */
+export function withAutoSlug(record: Doc, fields: FieldDef[], key: string, value: unknown, unsaved: boolean): Doc {
+  const next: Doc = { ...record, [key]: value };
+  const follow = (slugKey: string) => {
+    const current = String(record[slugKey] ?? '');
+    if (!current || current === slugify(String(record[key] ?? ''))) next[slugKey] = slugify(String(value ?? ''));
+  };
+  for (const f of fields) {
+    // The record's own URL slug: only before the first save.
+    if (f.type === 'slug' && f.from === key && unsaved) follow(f.key);
+    // Companion slugs such as categorySlug / industrySlug follow their label field.
+    if (f.type === 'text' && f.key === `${key}Slug`) follow(f.key);
+  }
+  return next;
+}
+
 /** Empty value for a field, used for new records and new list rows. */
 export function emptyValue(field: FieldDef): unknown {
   switch (field.type) {
@@ -161,14 +192,16 @@ export function analyseSeo(input: { seo?: SeoValue; title?: string; summary?: st
   if (!kw) {
     checks.push({ level: 'warn', message: 'No focus keyword set.' });
   } else {
-    const kwSlug = kw.replace(/[^a-z0-9]+/g, '-');
-    checks.push(title.toLowerCase().includes(kw) ? { level: 'good', message: 'Focus keyword appears in the title.' } : { level: 'bad', message: 'Focus keyword is missing from the title.' });
-    checks.push(description.toLowerCase().includes(kw) ? { level: 'good', message: 'Focus keyword appears in the description.' } : { level: 'warn', message: 'Focus keyword is missing from the description.' });
+    // Ignore case, spaces and punctuation so "Next.js 15" matches "nextjs 15" (same rule as the backend).
+    const key = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const has = (text: string) => key(text).includes(key(kw));
+    checks.push(has(title) ? { level: 'good', message: 'Focus keyword appears in the title.' } : { level: 'bad', message: 'Focus keyword is missing from the title.' });
+    checks.push(has(description) ? { level: 'good', message: 'Focus keyword appears in the description.' } : { level: 'warn', message: 'Focus keyword is missing from the description.' });
     if (input.slug !== undefined) {
-      checks.push((input.slug ?? '').includes(kwSlug) ? { level: 'good', message: 'Focus keyword appears in the URL.' } : { level: 'warn', message: 'Focus keyword is not in the URL slug.' });
+      checks.push(has(input.slug ?? '') ? { level: 'good', message: 'Focus keyword appears in the URL.' } : { level: 'warn', message: 'Focus keyword is not in the URL slug.' });
     }
     if (input.body) {
-      checks.push(input.body.toLowerCase().includes(kw) ? { level: 'good', message: 'Focus keyword appears in the content.' } : { level: 'warn', message: 'Focus keyword does not appear in the content.' });
+      checks.push(has(input.body) ? { level: 'good', message: 'Focus keyword appears in the content.' } : { level: 'warn', message: 'Focus keyword does not appear in the content.' });
     }
   }
 
