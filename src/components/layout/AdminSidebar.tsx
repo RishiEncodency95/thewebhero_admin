@@ -46,6 +46,7 @@ import {
   Target,
   Landmark,
   Settings,
+  Contact,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/lib/auth';
@@ -104,6 +105,7 @@ export const navItems: { group: string; items: NavItem[] }[] = [
       { title: 'SEO Center', url: '/dashboard/seo', icon: Gauge, resource: 'seo-pages' },
       content('seo-pages', 'Page SEO', FileSearch),
       { title: 'Home Page', url: '/dashboard/site/home-page', icon: Home, resource: 'home-page' },
+      { title: 'Contact & Social', url: '/dashboard/contact', icon: Contact, resource: 'settings' },
       { title: 'Site Settings', url: '/dashboard/site/settings', icon: Settings, resource: 'settings' },
       { title: 'Media Library', url: '/dashboard/media-library', icon: ImageIcon, resource: 'media' },
     ],

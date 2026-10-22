@@ -11,8 +11,18 @@ import { Doc, emptyRecord, toPayload } from '@/lib/cms';
 import { ContentForm } from './ContentForm';
 import { useContentType } from './useContentType';
 
+interface SingletonScreenProps {
+  resource: string;
+  /** Show only these field groups (tabs); the rest of the document is kept as is. */
+  groups?: string[];
+  /** Hide these field groups because another screen edits them. */
+  hideGroups?: string[];
+  title?: string;
+  description?: string;
+}
+
 /** Edit screen for a one-off document such as site settings or the home page. */
-export function SingletonScreen({ resource }: { resource: string }) {
+export function SingletonScreen({ resource, groups, hideGroups = [], title, description }: SingletonScreenProps) {
   const { can } = useAuth();
   const { def, error: defError } = useContentType(resource);
   const [saved, setSaved] = useState<Doc | null>(null);
@@ -83,10 +93,12 @@ export function SingletonScreen({ resource }: { resource: string }) {
   if (error) return <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>;
   if (!def || !doc) return <div className="flex h-72 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-violet-600" /></div>;
 
+  const hidden = groups ? [...new Set(def.fields.map((f) => f.group ?? 'General'))].filter((g) => !groups.includes(g)) : hideGroups;
+
   return (
     <div className="pb-24">
-      <PageHeader title={def.label} description={def.description} crumbs={[{ label: 'Site' }, { label: def.label }]} />
-      <ContentForm resource={resource} fields={def.fields} value={doc} onChange={setDoc} errors={errors} />
+      <PageHeader title={title ?? def.label} description={description ?? def.description} crumbs={[{ label: 'Site' }, { label: title ?? def.label }]} />
+      <ContentForm resource={resource} fields={def.fields} value={doc} onChange={setDoc} errors={errors} hideGroups={hidden} />
 
       {canSave && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur md:left-[var(--sidebar-width,16rem)]">
