@@ -17,7 +17,13 @@ interface ContentFormProps {
 }
 
 // Preferred tab order; any other group names follow in definition order.
-const GROUP_ORDER = ['Basics', 'General', 'Brand', 'Hero', 'About', 'Content', 'Details', 'Related', 'Stats', 'Values & culture', 'Process', 'Contact', 'SEO defaults', 'Analytics', 'Notifications', 'SEO'];
+const GROUP_ORDER = [
+  'Basics', 'General', 'Brand', 'Hero', 'Stats', 'About', 'Content', 'Details', 'Related',
+  // Home page sections, in the order they appear on the page
+  'Services', 'Featured service', 'Solutions', 'Industries', 'Technologies & Projects',
+  'Values & culture', 'Process', 'Why us & Testimonials', 'Blog & FAQ', 'Call to action',
+  'Contact', 'SEO defaults', 'Analytics', 'Notifications', 'SEO',
+];
 
 /** Tabbed form for a CMS content type. Fields are grouped by their `group`. */
 export function ContentForm({ resource, fields, value, onChange, errors, hideGroups = [], initialGroup }: ContentFormProps) {

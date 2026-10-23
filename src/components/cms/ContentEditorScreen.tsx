@@ -13,6 +13,7 @@ import { Doc, emptyRecord, publicPath, SITE_URL, toPayload, lowerLabel } from '@
 import { ContentForm } from './ContentForm';
 import { FieldInput } from './FieldInput';
 import { useContentType } from './useContentType';
+import { UsedOn } from './UsedOn';
 
 const PUBLISH_GROUP = 'Publish';
 
@@ -185,7 +186,13 @@ export function ContentEditorScreen({ resource, id, initialTab }: { resource: st
               {path && (
                 <div className="flex justify-between gap-3">
                   <dt className="text-slate-500">URL</dt>
-                  <dd className="truncate font-mono text-[12px] text-slate-700" title={path}>{path}</dd>
+                  <dd className="truncate font-mono text-[12px]" title={path}>
+                    {livePublished ? (
+                      <a href={`${SITE_URL}${path}`} target="_blank" rel="noopener noreferrer" className="text-violet-700 hover:underline">{path}</a>
+                    ) : (
+                      <span className="text-slate-700">{path}</span>
+                    )}
+                  </dd>
                 </div>
               )}
               <div className="flex justify-between gap-3">
@@ -198,6 +205,8 @@ export function ContentEditorScreen({ resource, id, initialTab }: { resource: st
               </div>
             </dl>
           </section>
+
+          <UsedOn resource={resource} compact />
 
           {!isNew && can(resource, 'delete') && (
             <section className="rounded-2xl border border-red-100 bg-white p-5 shadow-sm">

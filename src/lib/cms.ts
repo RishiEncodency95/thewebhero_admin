@@ -48,7 +48,94 @@ export const isWideField = (f: FieldDef) => WIDE_TYPES.has(f.type);
 /** "Blog post" → "blog post", but acronyms stay: "FAQ" → "FAQ". */
 export const lowerLabel = (label: string) => label.split(' ').map((w) => (w.length > 1 && w === w.toUpperCase() ? w : w.toLowerCase())).join(' ');
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://thewebhero.in').replace(/\/+$/, '');
+// The live site in production; the local website (next dev on :3000) while developing.
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? (process.env.NODE_ENV === 'production' ? 'https://thewebhero.in' : 'http://localhost:3000')
+).replace(/\/+$/, '');
+
+export interface UsedOn {
+  label: string;
+  /** Website path to open, when there is one page to show. */
+  href?: string;
+}
+
+/** Where each kind of content appears on the website (shown in the admin). */
+export const USED_ON: Record<string, UsedOn[]> = {
+  services: [
+    { label: 'Services page', href: '/services' },
+    { label: 'Its own page: /services/{slug}' },
+    { label: 'Header menu → Services' },
+    { label: 'Footer → Services (featured first)', href: '/#footer' },
+    { label: 'Get a Quote → service options', href: '/get-a-quote' },
+  ],
+  solutions: [
+    { label: 'Solutions page', href: '/solutions' },
+    { label: 'Its own page: /solutions/{slug}' },
+    { label: 'Header menu → Solutions' },
+    { label: 'Footer → Solutions (featured first)', href: '/#footer' },
+  ],
+  technologies: [
+    { label: 'Technologies page', href: '/technologies' },
+    { label: 'Its own page: /technologies/{slug}' },
+    { label: 'Header menu → Technologies' },
+  ],
+  industries: [
+    { label: 'Industries page', href: '/industries' },
+    { label: 'Its own page: /industries/{slug}' },
+    { label: 'Header menu → Industries' },
+  ],
+  categories: [
+    { label: 'Groups on the Services, Solutions, Technologies and Industries pages', href: '/services' },
+    { label: 'Columns of the header mega menus' },
+  ],
+  'business-needs': [{ label: 'Solutions page → solutions by business need', href: '/solutions' }],
+  portfolio: [
+    { label: 'Portfolio page', href: '/portfolio' },
+    { label: 'Its own page: /portfolio/{slug}' },
+    { label: 'Home page → Featured Projects', href: '/' },
+  ],
+  blog: [
+    { label: 'Blog page', href: '/blog' },
+    { label: 'Its own page: /blog/{slug}' },
+    { label: 'Home page → Latest Insights', href: '/' },
+    { label: 'Other articles → Popular reads & Previous/Next' },
+  ],
+  team: [
+    { label: 'Team page', href: '/company/team' },
+    { label: 'Its own page: /company/team/{slug}' },
+    { label: 'Company and About pages', href: '/company/about' },
+  ],
+  careers: [
+    { label: 'Careers page', href: '/company/careers' },
+    { label: 'Its own page: /company/careers/{slug}' },
+    { label: 'Company and Culture pages', href: '/company/culture' },
+  ],
+  testimonials: [{ label: 'Home page → Testimonials (published ones only)', href: '/' }],
+  faqs: [
+    { label: 'Home page FAQ (Page = Home)', href: '/' },
+    { label: 'Get a Quote FAQ (Page = Get a quote)', href: '/get-a-quote' },
+    { label: 'Contact FAQ (Page = Contact)', href: '/contact' },
+  ],
+  locations: [
+    { label: 'Its own page: /locations/city|country/{slug}' },
+    { label: 'Footer → Top cities / Top countries', href: '/#footer' },
+  ],
+  'seo-pages': [{ label: 'Search title, description and share image of fixed pages (Home, Contact, Blog…)' }],
+  settings: [
+    { label: 'Every page: top bar, header, footer and Google schema', href: '/' },
+    { label: 'Contact page', href: '/contact' },
+    { label: 'Floating WhatsApp / Call / social buttons' },
+  ],
+  company: [
+    { label: 'Company overview', href: '/company' },
+    { label: 'About us', href: '/company/about' },
+    { label: 'Our process', href: '/company/process' },
+    { label: 'Why choose us', href: '/company/why-us' },
+    { label: 'Culture', href: '/company/culture' },
+    { label: 'Careers page', href: '/company/careers' },
+  ],
+  'home-page': [{ label: 'Home page', href: '/' }],
+};
 
 /** Where a record lives on the website (mirrors publicPath in the backend content modules). */
 export function publicPath(resource: string, doc: Doc): string | null {

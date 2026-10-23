@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { api, apiUpload, ApiRequestError, Paginated } from '@/lib/api';
 import { Doc, emptyRecord, FieldDef, setIn, isWideField, cleanSlugInput, isUnsaved, slugify, withAutoSlug } from '@/lib/cms';
 import { SeoPanel } from './SeoPanel';
+import { RichTextEditor } from './RichTextEditor';
 
 export interface FieldProps {
   field: FieldDef;
@@ -149,46 +150,10 @@ function SelectInput({ field, value, onChange, error }: FieldProps) {
 
 // ── Markdown ────────────────────────────────────────────────────────────
 
-/** Minimal preview of the Markdown subset the website renders (## / ### / - / ``` / ** / `). */
-function renderMarkdownPreview(md: string) {
-  const html = md
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/```[a-z]*\n([\s\S]*?)```/g, (_m, code) => `<pre class="rounded-lg bg-slate-900 p-3 text-xs text-slate-100 overflow-x-auto">${code}</pre>`)
-    .replace(/^### (.*)$/gm, '<h3 class="mt-4 text-base font-semibold">$1</h3>')
-    .replace(/^## (.*)$/gm, '<h2 class="mt-5 text-lg font-bold">$1</h2>')
-    .replace(/^- (.*)$/gm, '<li class="ml-4 list-disc">$1</li>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`]+)`/g, '<code class="rounded bg-slate-100 px-1 text-violet-700">$1</code>')
-    .replace(/\n{2,}/g, '<br/><br/>');
-  return { __html: html };
-}
-
 function MarkdownInput({ field, value, onChange, error }: FieldProps) {
-  const [tab, setTab] = useState<'write' | 'preview'>('write');
-  const str = (value as string) ?? '';
-  const words = str.split(/\s+/).filter(Boolean).length;
   return (
     <FieldShell field={field} error={error}>
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-2 py-1.5">
-          <div className="flex gap-1">
-            {(['write', 'preview'] as const).map((t) => (
-              <button key={t} type="button" onClick={() => setTab(t)} className={`rounded-lg px-3 py-1 text-[12px] font-semibold capitalize ${tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>
-                {t}
-              </button>
-            ))}
-          </div>
-          <span className="text-[11px] text-slate-400">
-            {words} words · ~{Math.max(1, Math.round(words / 220))} min read · ## heading, - list, **bold**, ```code```
-          </span>
-        </div>
-        {tab === 'write' ? (
-          <textarea value={str} onChange={(e) => onChange(e.target.value)} rows={22} className="block w-full resize-y p-4 font-mono text-[13px] leading-relaxed outline-none" />
-        ) : (
-          <div className="prose-sm max-h-[560px] overflow-y-auto p-4 text-[14px] leading-relaxed text-slate-700" dangerouslySetInnerHTML={renderMarkdownPreview(str)} />
-        )}
-      </div>
+      <RichTextEditor value={(value as string) ?? ''} onChange={onChange} placeholder={field.placeholder ?? 'Start writing…'} />
     </FieldShell>
   );
 }

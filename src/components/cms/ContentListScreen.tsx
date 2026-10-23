@@ -14,6 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { analyseSeo, ContentTypeDef, Doc, FieldDef, publicPath, scoreTone, SeoValue, SITE_URL, lowerLabel } from '@/lib/cms';
 import { useContentType } from './useContentType';
 import { PAGE_SIZE, Pagination } from '@/components/admin/kit';
+import { UsedOn } from './UsedOn';
 
 
 const SCORE_STYLE = { good: 'bg-emerald-50 text-emerald-700 ring-emerald-200', warn: 'bg-amber-50 text-amber-700 ring-amber-200', bad: 'bg-red-50 text-red-700 ring-red-200' };
@@ -196,6 +197,10 @@ export function ContentListScreen({ resource }: { resource: string }) {
           )
         }
       />
+
+      <div className="mb-4">
+        <UsedOn resource={resource} />
+      </div>
 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex rounded-xl border border-slate-200 bg-white p-1">

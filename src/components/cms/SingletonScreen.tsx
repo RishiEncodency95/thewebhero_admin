@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { Doc, emptyRecord, toPayload } from '@/lib/cms';
 import { ContentForm } from './ContentForm';
 import { useContentType } from './useContentType';
+import { UsedOn } from './UsedOn';
 
 interface SingletonScreenProps {
   resource: string;
@@ -98,6 +99,9 @@ export function SingletonScreen({ resource, groups, hideGroups = [], title, desc
   return (
     <div className="pb-24">
       <PageHeader title={title ?? def.label} description={description ?? def.description} crumbs={[{ label: 'Site' }, { label: title ?? def.label }]} />
+      <div className="mb-4">
+        <UsedOn resource={resource} />
+      </div>
       <ContentForm resource={resource} fields={def.fields} value={doc} onChange={setDoc} errors={errors} hideGroups={hidden} />
 
       {canSave && (
